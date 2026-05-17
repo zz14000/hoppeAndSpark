@@ -1,0 +1,65 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: hope-mysql
+    environment:
+      MYSQL_DATABASE: hope_sparks
+      MYSQL_USER: hope
+      MYSQL_PASSWORD: hope123456
+      MYSQL_ROOT_PASSWORD: root123456
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - hope_mysql_data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+
+  redis:
+    image: redis:7.2
+    container_name: hope-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - hope_redis_data:/data
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: hope-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: hope
+      RABBITMQ_DEFAULT_PASS: hope123456
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - hope_rabbitmq_data:/var/lib/rabbitmq
+
+  minio:
+    image: minio/minio:RELEASE.2024-10-13T13-34-11Z
+    container_name: hope-minio
+    environment:
+      MINIO_ROOT_USER: hope
+      MINIO_ROOT_PASSWORD: hope123456
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - hope_minio_data:/data
+    command: server /data --console-address ":9001"
+
+  chroma:
+    image: chromadb/chroma:0.5.5
+    container_name: hope-chroma
+    ports:
+      - "8000:8000"
+    volumes:
+      - hope_chroma_data:/chroma/chroma
+
+volumes:
+  hope_mysql_data:
+  hope_redis_data:
+  hope_rabbitmq_data:
+  hope_minio_data:
+  hope_chroma_data:

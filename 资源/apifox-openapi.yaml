@@ -1,0 +1,4934 @@
+openapi: 3.0.3
+info:
+  title: Hope and Sparks API
+  version: 1.0.0
+  description: 'Apifox 导入版接口规范。详细业务说明、数据库落库规则和枚举映射见根目录
+
+    `Hope_and_Sparks_API接口文档.md`。
+
+    '
+servers:
+- url: http://localhost:8080
+  description: 本地开发环境
+- url: /
+  description: 相对路径
+security:
+- bearerAuth: []
+tags:
+- name: 用户与认证
+- name: Spark画像与首次引导
+- name: 用户资料与个人中心
+- name: Agent智能体
+- name: Nebula探索与资源生成
+- name: 学习资源库
+- name: 视频学习
+- name: 文档阅读
+- name: 学习计划日历与拓扑
+- name: 技能树
+- name: 练习与测试
+- name: 社区与文章
+- name: 消息私信与群聊
+- name: 通知
+- name: 设置
+- name: 设备与安全
+- name: 文件上传
+- name: Manage管理端
+paths:
+  /api/v1/auth/register:
+    post:
+      tags:
+      - 用户与认证
+      summary: 注册
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                email:
+                  type: string
+                  example: spark@example.com
+                  description: 邮箱，对应 sys_user.email
+                password:
+                  type: string
+                  example: '12345678'
+                  description: 密码，服务端加密后写入 sys_user.password_hash
+                nickname:
+                  type: string
+                  example: 一粒黑子
+                  description: 昵称，对应 sys_user.nickname
+                role:
+                  type: string
+                  example: spark
+                  description: 用户角色，默认 spark
+              required:
+              - email
+              - password
+              - nickname
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `email` | 是 | string | 邮箱，对应 sys_user.email |
+
+        | Body | `password` | 是 | string | 密码，服务端加密后写入 sys_user.password_hash |
+
+        | Body | `nickname` | 是 | string | 昵称，对应 sys_user.nickname |
+
+        | Body | `role` | 否 | string | 用户角色，默认 spark |
+
+
+        主要数据表：sys_user、user_profile、user_login_session'
+  /api/v1/auth/login:
+    post:
+      tags:
+      - 用户与认证
+      summary: 登录
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                account:
+                  type: string
+                  example: spark@example.com
+                  description: 邮箱或用户名，对应 sys_user.email/sys_user.username
+                password:
+                  type: string
+                  example: '12345678'
+                  description: 密码，服务端加密后写入 sys_user.password_hash
+                clientType:
+                  type: string
+                  example: web
+                  enum:
+                  - web
+                  - desktop
+                  - mobile
+                  description: 客户端类型：web/desktop/mobile
+                deviceId:
+                  type: string
+                  example: device_001
+                  description: 设备标识，对应 user_login_session.device_id
+              required:
+              - account
+              - password
+      responses:
+        '200':
+          $ref: '#/components/responses/AuthSuccess'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `account` | 是 | string | 邮箱或用户名，对应 sys_user.email/sys_user.username |
+
+        | Body | `password` | 是 | string | 密码，服务端加密后写入 sys_user.password_hash |
+
+        | Body | `clientType` | 否 | string | 客户端类型：web/desktop/mobile |
+
+        | Body | `deviceId` | 否 | string | 设备标识，对应 user_login_session.device_id |
+
+
+        主要数据表：sys_user、user_profile、user_login_session'
+  /api/v1/auth/refresh:
+    post:
+      tags:
+      - 用户与认证
+      summary: 刷新 token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                refreshToken:
+                  type: string
+                  description: 刷新令牌，对应 user_login_session.refresh_token
+              required:
+              - refreshToken
+      responses:
+        '200':
+          $ref: '#/components/responses/AuthSuccess'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `refreshToken` | 是 | string | 刷新令牌，对应 user_login_session.refresh_token |
+
+
+        主要数据表：sys_user、user_profile、user_login_session'
+  /api/v1/auth/logout:
+    post:
+      tags:
+      - 用户与认证
+      summary: 退出登录
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | 无 | - | - | - | 无参数 |
+
+
+        主要数据表：sys_user、user_profile、user_login_session'
+  /api/v1/auth/password/reset-request:
+    post:
+      tags:
+      - 用户与认证
+      summary: 找回密码
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                email:
+                  type: string
+                  description: 邮箱，对应 sys_user.email
+                  format: email
+                  example: spark@example.com
+              required:
+              - email
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `email` | 是 | string | 邮箱，对应 sys_user.email |
+
+
+        主要数据表：sys_user、user_profile、user_login_session'
+  /api/v1/auth/password/reset-confirm:
+    post:
+      tags:
+      - 用户与认证
+      summary: 重置密码
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                token:
+                  type: string
+                  description: 重置或校验凭证
+                password:
+                  type: string
+                  description: 密码，服务端加密后写入 sys_user.password_hash
+                  example: '12345678'
+              required:
+              - token
+              - password
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `token` | 是 | string | 重置或校验凭证 |
+
+        | Body | `password` | 是 | string | 密码，服务端加密后写入 sys_user.password_hash |
+
+
+        主要数据表：sys_user、user_profile、user_login_session'
+  /api/v1/onboarding/questions:
+    get:
+      tags:
+      - Spark画像与首次引导
+      summary: 获取画像引导问题
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | 无 | - | - | - | 无参数 |
+
+
+        主要数据表：user_profile、agent_memory'
+  /api/v1/onboarding/answers:
+    post:
+      tags:
+      - Spark画像与首次引导
+      summary: 提交单轮画像回答
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                questionId:
+                  type: string
+                  example: q_learning_goal
+                  description: 题目 ID，对应 question_bank.id
+                answer:
+                  type: object
+                  additionalProperties: true
+                  description: 用户答案，按题型可为字符串、数组或对象
+                answerText:
+                  type: string
+                  description: 文本答案
+                selectedOptions:
+                  type: array
+                  items:
+                    type: string
+                  description: 选择题选项数组
+              required:
+              - questionId
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `questionId` | 是 | string | 题目 ID，对应 question_bank.id |
+
+        | Body | `answer` | 否 | object | 用户答案，按题型可为字符串、数组或对象 |
+
+        | Body | `answerText` | 否 | string | 文本答案 |
+
+        | Body | `selectedOptions` | 否 | array<string> | 选择题选项数组 |
+
+
+        主要数据表：user_profile、agent_memory'
+  /api/v1/onboarding/complete:
+    post:
+      tags:
+      - Spark画像与首次引导
+      summary: 生成 Spark 画像
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | 无 | - | - | - | 无参数 |
+
+
+        主要数据表：user_profile、agent_memory'
+  /api/v1/spark-profile/rebuild:
+    post:
+      tags:
+      - Spark画像与首次引导
+      summary: 重新构建画像
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                reason:
+                  type: string
+                  description: 操作原因
+                answers:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: true
+                  description: 批量作答内容
+              required:
+              - reason
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `reason` | 是 | string | 操作原因 |
+
+        | Body | `answers` | 否 | array<object> | 批量作答内容 |
+
+
+        主要数据表：user_profile、agent_memory'
+  /api/v1/user/current:
+    get:
+      tags:
+      - 用户资料与个人中心
+      summary: 获取当前用户
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | 无 | - | - | - | 无参数 |
+
+
+        主要数据表：sys_user、user_profile、user_settings、user_resource_favorite、blog_favorite'
+  /api/v1/users/{userId}:
+    get:
+      tags:
+      - 用户资料与个人中心
+      summary: 获取指定用户主页
+      parameters:
+      - $ref: '#/components/parameters/userId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `userId` | 是 | string | 用户 ID，对应 sys_user.id |
+
+
+        主要数据表：sys_user、user_profile、user_settings、user_resource_favorite、blog_favorite'
+  /api/v1/user/profile:
+    put:
+      tags:
+      - 用户资料与个人中心
+      summary: 更新个人资料
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                nickname:
+                  type: string
+                  description: 昵称，对应 sys_user.nickname
+                  example: 一粒黑子
+                avatar:
+                  type: string
+                  description: 头像地址，对应 sys_user.avatar_url
+                bio:
+                  type: string
+                  description: 个人简介，对应 user_profile.bio
+                learningDomain:
+                  type: string
+                  description: 学习方向，对应 user_profile.major_domain
+                gradeLevel:
+                  type: string
+                  description: 学段/年级，对应 user_profile.grade_level
+                knowledgeBaseLevel:
+                  type: string
+                  description: 基础水平，对应 user_profile.knowledge_base_level
+                selfDiscipline:
+                  type: string
+                  description: 自律程度，对应 user_profile.self_discipline
+                interests:
+                  type: array
+                  items:
+                    type: string
+                  description: 兴趣标签
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `nickname` | 否 | string | 昵称，对应 sys_user.nickname |
+
+        | Body | `avatar` | 否 | string | 头像地址，对应 sys_user.avatar_url |
+
+        | Body | `bio` | 否 | string | 个人简介，对应 user_profile.bio |
+
+        | Body | `learningDomain` | 否 | string | 学习方向，对应 user_profile.major_domain |
+
+        | Body | `gradeLevel` | 否 | string | 学段/年级，对应 user_profile.grade_level |
+
+        | Body | `knowledgeBaseLevel` | 否 | string | 基础水平，对应 user_profile.knowledge_base_level |
+
+        | Body | `selfDiscipline` | 否 | string | 自律程度，对应 user_profile.self_discipline |
+
+        | Body | `interests` | 否 | array<string> | 兴趣标签 |
+
+
+        主要数据表：sys_user、user_profile、user_settings、user_resource_favorite、blog_favorite'
+  /api/v1/user/learning-stats:
+    get:
+      tags:
+      - 用户资料与个人中心
+      summary: 获取学习数据统计
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | 无 | - | - | - | 无参数 |
+
+
+        主要数据表：sys_user、user_profile、user_settings、user_resource_favorite、blog_favorite'
+  /api/v1/user/collections:
+    get:
+      tags:
+      - 用户资料与个人中心
+      summary: 获取我的收藏
+      parameters:
+      - $ref: '#/components/parameters/type'
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          $ref: '#/components/responses/PageSuccess'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Query | `type` | 否 | string | 类型筛选，具体枚举见接口文档数据字典 |
+
+        | Query | `page` | 否 | integer | 页码，从 1 开始 |
+
+        | Query | `pageSize` | 否 | integer | 每页数量 |
+
+
+        主要数据表：sys_user、user_profile、user_settings、user_resource_favorite、blog_favorite'
+    post:
+      tags:
+      - 用户资料与个人中心
+      summary: 收藏或取消收藏
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                targetType:
+                  type: string
+                  enum:
+                  - resource
+                  - article
+                  - question
+                  - course
+                  description: 目标类型
+                targetId:
+                  type: string
+                  description: 目标 ID
+                action:
+                  type: string
+                  example: toggle
+                  enum:
+                  - collect
+                  - uncollect
+                  - toggle
+                  description: 动作类型
+              required:
+              - targetType
+              - targetId
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `targetType` | 是 | string | 目标类型 |
+
+        | Body | `targetId` | 是 | string | 目标 ID |
+
+        | Body | `action` | 否 | string | 动作类型 |
+
+
+        主要数据表：sys_user、user_profile、user_settings、user_resource_favorite、blog_favorite'
+  /api/v1/user/collections/{collectionId}:
+    delete:
+      tags:
+      - 用户资料与个人中心
+      summary: 删除收藏
+      parameters:
+      - $ref: '#/components/parameters/collectionId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `collectionId` | 是 | string | 收藏记录 ID，对应收藏/资源收藏表主键 |
+
+
+        主要数据表：sys_user、user_profile、user_settings、user_resource_favorite、blog_favorite'
+  /api/v1/agents:
+    get:
+      tags:
+      - Agent智能体
+      summary: 获取智能体列表
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | 无 | - | - | - | 无参数 |
+
+
+        主要数据表：agent_chat_session、agent_chat_message、agent_graph_thread、agent_memory、async_generation_task'
+  /api/v1/agent-sessions:
+    post:
+      tags:
+      - Agent智能体
+      summary: 创建对话会话
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                agentId:
+                  type: string
+                  example: nebula
+                  description: 智能体 ID，如 nebula/coach/sage
+                title:
+                  type: string
+                  description: 标题
+                  example: 二叉搜索树章节课后练习
+                contextNodeId:
+                  type: string
+                  description: 上下文知识点 ID，对应 knowledge_node.id
+                contextResourceId:
+                  type: string
+                  description: 上下文资源 ID，对应 learning_resource.id
+                metadata:
+                  type: object
+                  additionalProperties: true
+                  description: 扩展元数据
+              required:
+              - agentId
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `agentId` | 是 | string | 智能体 ID，如 nebula/coach/sage |
+
+        | Body | `title` | 否 | string | 标题 |
+
+        | Body | `contextNodeId` | 否 | string | 上下文知识点 ID，对应 knowledge_node.id |
+
+        | Body | `contextResourceId` | 否 | string | 上下文资源 ID，对应 learning_resource.id |
+
+        | Body | `metadata` | 否 | object | 扩展元数据 |
+
+
+        主要数据表：agent_chat_session、agent_chat_message、agent_graph_thread、agent_memory、async_generation_task'
+  /api/v1/agent-sessions/{sessionId}/messages:
+    get:
+      tags:
+      - Agent智能体
+      summary: 获取会话历史
+      parameters:
+      - $ref: '#/components/parameters/sessionId'
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          $ref: '#/components/responses/PageSuccess'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `sessionId` | 是 | string | Agent 会话 ID，对应 agent_chat_session.id |
+
+        | Query | `page` | 否 | integer | 页码，从 1 开始 |
+
+        | Query | `pageSize` | 否 | integer | 每页数量 |
+
+
+        主要数据表：agent_chat_session、agent_chat_message、agent_graph_thread、agent_memory、async_generation_task'
+    post:
+      tags:
+      - Agent智能体
+      summary: 发送消息给智能体
+      parameters:
+      - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                content:
+                  type: string
+                  description: 正文内容
+                  example: 这里是正文内容
+                contentType:
+                  type: string
+                  example: text
+                  enum:
+                  - text
+                  - image
+                  - file
+                  - mixed
+                  description: 内容类型
+                attachments:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: true
+                  description: 附件列表，对应 sys_oss_file
+                stream:
+                  type: boolean
+                  example: true
+                  description: 是否使用流式响应
+              required:
+              - content
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `sessionId` | 是 | string | Agent 会话 ID，对应 agent_chat_session.id |
+
+        | Body | `content` | 是 | string | 正文内容 |
+
+        | Body | `contentType` | 否 | string | 内容类型 |
+
+        | Body | `attachments` | 否 | array<object> | 附件列表，对应 sys_oss_file |
+
+        | Body | `stream` | 否 | boolean | 是否使用流式响应 |
+
+
+        主要数据表：agent_chat_session、agent_chat_message、agent_graph_thread、agent_memory、async_generation_task'
+  /api/v1/agent-sessions/{sessionId}/stream:
+    get:
+      tags:
+      - Agent智能体
+      summary: Agent 流式响应
+      parameters:
+      - $ref: '#/components/parameters/sessionId'
+      - $ref: '#/components/parameters/messageIdQuery'
+      responses:
+        '200':
+          description: SSE 流式响应
+          content:
+            text/event-stream:
+              schema:
+                type: string
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `sessionId` | 是 | string | Agent 会话 ID，对应 agent_chat_session.id |
+
+        | Query | `messageId` | 是 | string | 消息 ID，对应 agent_chat_message.id 或 im_message.id |
+
+
+        主要数据表：agent_chat_session、agent_chat_message、agent_graph_thread、agent_memory、async_generation_task'
+  /api/v1/ai-disputes:
+    post:
+      tags:
+      - Agent智能体
+      summary: 举报 AI 内容争议
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                targetType:
+                  type: string
+                  enum:
+                  - resource
+                  - chat_message
+                  - comment
+                  - chunk
+                  - system
+                  description: 目标类型
+                targetId:
+                  type: string
+                  description: 目标 ID
+                issueType:
+                  type: string
+                  enum:
+                  - hallucination
+                  - inappropriate
+                  - bug
+                  - other
+                  description: 问题类型，见 feedback_ticket.issue_type
+                description:
+                  type: string
+                  description: 问题描述
+                evidence:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: true
+                  description: 证据材料
+              required:
+              - targetType
+              - targetId
+              - issueType
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `targetType` | 是 | string | 目标类型 |
+
+        | Body | `targetId` | 是 | string | 目标 ID |
+
+        | Body | `issueType` | 是 | string | 问题类型，见 feedback_ticket.issue_type |
+
+        | Body | `description` | 否 | string | 问题描述 |
+
+        | Body | `evidence` | 否 | array<object> | 证据材料 |
+
+
+        主要数据表：agent_chat_session、agent_chat_message、agent_graph_thread、agent_memory、async_generation_task'
+  /api/v1/explore:
+    post:
+      tags:
+      - Nebula探索与资源生成
+      summary: 调用 Nebula 全局探索
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                keyword:
+                  type: string
+                  example: BST
+                  description: 搜索关键词
+                domain:
+                  type: string
+                  example: backend
+                  description: 学习/知识领域
+                depth:
+                  type: integer
+                  example: 2
+                  description: depth
+                goals:
+                  type: array
+                  items:
+                    type: string
+                  description: 学习目标列表
+                preferredResourceTypes:
+                  type: array
+                  items:
+                    type: string
+                  description: 偏好的资源类型
+              required:
+              - keyword
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `keyword` | 是 | string | 搜索关键词 |
+
+        | Body | `domain` | 否 | string | 学习/知识领域 |
+
+        | Body | `depth` | 否 | integer | depth |
+
+        | Body | `goals` | 否 | array<string> | 学习目标列表 |
+
+        | Body | `preferredResourceTypes` | 否 | array<string> | 偏好的资源类型 |
+
+
+        主要数据表：knowledge_node、knowledge_node_relation、learning_resource、async_generation_task、kb_chunk_record/Chroma'
+  /api/v1/explore/{exploreId}:
+    get:
+      tags:
+      - Nebula探索与资源生成
+      summary: 获取探索详情
+      parameters:
+      - $ref: '#/components/parameters/exploreId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `exploreId` | 是 | string | 探索任务 ID，对应异步生成或探索记录 |
+
+
+        主要数据表：knowledge_node、knowledge_node_relation、learning_resource、async_generation_task、kb_chunk_record/Chroma'
+  /api/v1/explore/{exploreId}/mindmap:
+    post:
+      tags:
+      - Nebula探索与资源生成
+      summary: 生成思维导图
+      parameters:
+      - $ref: '#/components/parameters/exploreId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                style:
+                  type: string
+                  example: default
+                  description: 生成样式
+                depth:
+                  type: integer
+                  example: 3
+                  description: depth
+                includeResources:
+                  type: boolean
+                  example: true
+                  description: 是否包含资源节点
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `exploreId` | 是 | string | 探索任务 ID，对应异步生成或探索记录 |
+
+        | Body | `style` | 否 | string | 生成样式 |
+
+        | Body | `depth` | 否 | integer | depth |
+
+        | Body | `includeResources` | 否 | boolean | 是否包含资源节点 |
+
+
+        主要数据表：knowledge_node、knowledge_node_relation、learning_resource、async_generation_task、kb_chunk_record/Chroma'
+  /api/v1/knowledge-graph:
+    get:
+      tags:
+      - Nebula探索与资源生成
+      summary: 获取知识关联图谱
+      parameters:
+      - name: keyword
+        in: query
+        schema:
+          type: string
+        description: 搜索关键词
+      - name: depth
+        in: query
+        schema:
+          type: integer
+          default: 2
+        description: 图谱深度
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Query | `keyword` | 否 | string | 搜索关键词 |
+
+        | Query | `depth` | 否 | integer | 图谱展开深度 |
+
+
+        主要数据表：knowledge_node、knowledge_node_relation、learning_resource、async_generation_task、kb_chunk_record/Chroma'
+  /api/v1/resources:
+    get:
+      tags:
+      - 学习资源库
+      summary: 获取资源列表
+      parameters:
+      - $ref: '#/components/parameters/type'
+      - $ref: '#/components/parameters/keyword'
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          $ref: '#/components/responses/PageSuccess'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Query | `type` | 否 | string | 类型筛选，具体枚举见接口文档数据字典 |
+
+        | Query | `keyword` | 否 | string | 搜索关键词 |
+
+        | Query | `page` | 否 | integer | 页码，从 1 开始 |
+
+        | Query | `pageSize` | 否 | integer | 每页数量 |
+
+
+        主要数据表：learning_resource、learning_resource_version、sys_oss_file、user_learning_record、feedback_ticket'
+  /api/v1/resources/{resourceId}:
+    get:
+      tags:
+      - 学习资源库
+      summary: 获取资源详情
+      parameters:
+      - $ref: '#/components/parameters/resourceId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `resourceId` | 是 | string | 学习资源 ID，对应 learning_resource.id |
+
+
+        主要数据表：learning_resource、learning_resource_version、sys_oss_file、user_learning_record、feedback_ticket'
+  /api/v1/readings/{readingId}:
+    get:
+      tags:
+      - 学习资源库
+      summary: 获取拓展阅读详情
+      parameters:
+      - $ref: '#/components/parameters/readingId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `readingId` | 是 | string | 拓展阅读资源 ID，对应 learning_resource.id |
+
+
+        主要数据表：learning_resource、learning_resource_version、sys_oss_file、user_learning_record、feedback_ticket'
+  /api/v1/code-cases/{caseId}:
+    get:
+      tags:
+      - 学习资源库
+      summary: 获取代码案例详情
+      parameters:
+      - $ref: '#/components/parameters/caseId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `caseId` | 是 | string | 代码案例资源 ID，对应 learning_resource.id |
+
+
+        主要数据表：learning_resource、learning_resource_version、sys_oss_file、user_learning_record、feedback_ticket'
+  /api/v1/resources/{resourceId}/progress:
+    put:
+      tags:
+      - 学习资源库
+      summary: 更新资源学习进度
+      parameters:
+      - $ref: '#/components/parameters/resourceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                progressPercent:
+                  type: integer
+                  example: 80
+                  description: 学习进度百分比
+                positionSeconds:
+                  type: integer
+                  example: 300
+                  description: 播放位置，单位秒
+                currentSection:
+                  type: string
+                  description: 当前章节/段落
+                completed:
+                  type: boolean
+                  example: false
+                  description: 是否完成
+              required:
+              - progressPercent
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `resourceId` | 是 | string | 学习资源 ID，对应 learning_resource.id |
+
+        | Body | `progressPercent` | 是 | integer | 学习进度百分比 |
+
+        | Body | `positionSeconds` | 否 | integer | 播放位置，单位秒 |
+
+        | Body | `currentSection` | 否 | string | 当前章节/段落 |
+
+        | Body | `completed` | 否 | boolean | 是否完成 |
+
+
+        主要数据表：learning_resource、learning_resource_version、sys_oss_file、user_learning_record、feedback_ticket'
+  /api/v1/resources/{resourceId}/export:
+    post:
+      tags:
+      - 学习资源库
+      summary: 导出资源
+      parameters:
+      - $ref: '#/components/parameters/resourceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                format:
+                  type: string
+                  example: pdf
+                  enum:
+                  - pdf
+                  - md
+                  - docx
+                  - pptx
+                  description: 导出格式
+                includeNotes:
+                  type: boolean
+                  example: true
+                  description: 是否包含笔记
+                includeMindmap:
+                  type: boolean
+                  example: false
+                  description: 是否包含思维导图
+              required:
+              - format
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `resourceId` | 是 | string | 学习资源 ID，对应 learning_resource.id |
+
+        | Body | `format` | 是 | string | 导出格式 |
+
+        | Body | `includeNotes` | 否 | boolean | 是否包含笔记 |
+
+        | Body | `includeMindmap` | 否 | boolean | 是否包含思维导图 |
+
+
+        主要数据表：learning_resource、learning_resource_version、sys_oss_file、user_learning_record、feedback_ticket'
+  /api/v1/resources/{resourceId}/feedback:
+    post:
+      tags:
+      - 学习资源库
+      summary: 对资源进行质量反馈
+      parameters:
+      - $ref: '#/components/parameters/resourceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                issueType:
+                  type: string
+                  enum:
+                  - hallucination
+                  - inappropriate
+                  - bug
+                  - other
+                  description: 问题类型，见 feedback_ticket.issue_type
+                rating:
+                  type: integer
+                  example: 4
+                  description: 评分
+                content:
+                  type: string
+                  description: 正文内容
+                  example: 这里是正文内容
+                evidence:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: true
+                  description: 证据材料
+              required:
+              - issueType
+              - content
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `resourceId` | 是 | string | 学习资源 ID，对应 learning_resource.id |
+
+        | Body | `issueType` | 是 | string | 问题类型，见 feedback_ticket.issue_type |
+
+        | Body | `rating` | 否 | integer | 评分 |
+
+        | Body | `content` | 是 | string | 正文内容 |
+
+        | Body | `evidence` | 否 | array<object> | 证据材料 |
+
+
+        主要数据表：learning_resource、learning_resource_version、sys_oss_file、user_learning_record、feedback_ticket'
+  /api/v1/videos/{videoId}:
+    get:
+      tags:
+      - 视频学习
+      summary: 获取视频详情
+      parameters:
+      - $ref: '#/components/parameters/videoId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `videoId` | 是 | string | 视频资源 ID，对应 learning_resource.id |
+
+
+        主要数据表：learning_resource、sys_oss_file、user_learning_record'
+  /api/v1/videos/{videoId}/episodes:
+    get:
+      tags:
+      - 视频学习
+      summary: 获取视频选集
+      parameters:
+      - $ref: '#/components/parameters/videoId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `videoId` | 是 | string | 视频资源 ID，对应 learning_resource.id |
+
+
+        主要数据表：learning_resource、sys_oss_file、user_learning_record'
+  /api/v1/videos/{videoId}/watch-progress:
+    put:
+      tags:
+      - 视频学习
+      summary: 上报播放进度
+      parameters:
+      - $ref: '#/components/parameters/videoId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                positionSeconds:
+                  type: integer
+                  example: 120
+                  description: 播放位置，单位秒
+                durationSeconds:
+                  type: integer
+                  example: 3600
+                  description: 耗时或资源总时长，单位秒
+                progressPercent:
+                  type: integer
+                  example: 30
+                  description: 学习进度百分比
+                completed:
+                  type: boolean
+                  example: false
+                  description: 是否完成
+              required:
+              - positionSeconds
+              - progressPercent
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `videoId` | 是 | string | 视频资源 ID，对应 learning_resource.id |
+
+        | Body | `positionSeconds` | 是 | integer | 播放位置，单位秒 |
+
+        | Body | `durationSeconds` | 否 | integer | 耗时或资源总时长，单位秒 |
+
+        | Body | `progressPercent` | 是 | integer | 学习进度百分比 |
+
+        | Body | `completed` | 否 | boolean | 是否完成 |
+
+
+        主要数据表：learning_resource、sys_oss_file、user_learning_record'
+  /api/v1/videos/{videoId}/transcripts:
+    get:
+      tags:
+      - 视频学习
+      summary: 获取视频字幕与 AI 提示
+      parameters:
+      - $ref: '#/components/parameters/videoId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `videoId` | 是 | string | 视频资源 ID，对应 learning_resource.id |
+
+
+        主要数据表：learning_resource、sys_oss_file、user_learning_record'
+  /api/v1/documents/{documentId}:
+    get:
+      tags:
+      - 文档阅读
+      summary: 获取文档详情
+      parameters:
+      - $ref: '#/components/parameters/documentId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `documentId` | 是 | string | 文档 ID，对应 learning_resource.id 或 kb_document.id |
+
+
+        主要数据表：learning_resource、kb_document、kb_chunk_record、user_learning_record'
+  /api/v1/documents/{documentId}/outline:
+    get:
+      tags:
+      - 文档阅读
+      summary: 获取文档目录
+      parameters:
+      - $ref: '#/components/parameters/documentId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `documentId` | 是 | string | 文档 ID，对应 learning_resource.id 或 kb_document.id |
+
+
+        主要数据表：learning_resource、kb_document、kb_chunk_record、user_learning_record'
+  /api/v1/documents/{documentId}/reading-progress:
+    put:
+      tags:
+      - 文档阅读
+      summary: 更新阅读进度
+      parameters:
+      - $ref: '#/components/parameters/documentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                page:
+                  type: integer
+                  example: 12
+                  description: 页码
+                scrollPercent:
+                  type: integer
+                  example: 65
+                  description: 阅读滚动百分比
+                progressPercent:
+                  type: integer
+                  example: 40
+                  description: 学习进度百分比
+                completed:
+                  type: boolean
+                  example: false
+                  description: 是否完成
+              required:
+              - progressPercent
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `documentId` | 是 | string | 文档 ID，对应 learning_resource.id 或 kb_document.id |
+
+        | Body | `page` | 否 | integer | 页码 |
+
+        | Body | `scrollPercent` | 否 | integer | 阅读滚动百分比 |
+
+        | Body | `progressPercent` | 是 | integer | 学习进度百分比 |
+
+        | Body | `completed` | 否 | boolean | 是否完成 |
+
+
+        主要数据表：learning_resource、kb_document、kb_chunk_record、user_learning_record'
+  /api/v1/documents/{documentId}/ask:
+    post:
+      tags:
+      - 文档阅读
+      summary: Sage 伴读提问
+      parameters:
+      - $ref: '#/components/parameters/documentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                content:
+                  type: string
+                  description: 正文内容
+                  example: 这里是正文内容
+                selectedText:
+                  type: string
+                  description: 用户选中的文档片段
+                page:
+                  type: integer
+                  description: 页码
+                agentId:
+                  type: string
+                  example: sage
+                  description: 智能体 ID，如 nebula/coach/sage
+              required:
+              - content
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `documentId` | 是 | string | 文档 ID，对应 learning_resource.id 或 kb_document.id |
+
+        | Body | `content` | 是 | string | 正文内容 |
+
+        | Body | `selectedText` | 否 | string | 用户选中的文档片段 |
+
+        | Body | `page` | 否 | integer | 页码 |
+
+        | Body | `agentId` | 否 | string | 智能体 ID，如 nebula/coach/sage |
+
+
+        主要数据表：learning_resource、kb_document、kb_chunk_record、user_learning_record'
+  /api/v1/learning-plans/current:
+    get:
+      tags:
+      - 学习计划日历与拓扑
+      summary: 获取学习计划
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | 无 | - | - | - | 无参数 |
+
+
+        主要数据表：study_plan、study_task、knowledge_node、knowledge_node_relation、user_knowledge_progress'
+  /api/v1/learning-plans/generate:
+    post:
+      tags:
+      - 学习计划日历与拓扑
+      summary: Strict 生成学习计划
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                courseId:
+                  type: string
+                  description: 课程 ID，对应 course.id
+                goal:
+                  type: string
+                  description: 学习目标
+                deadline:
+                  type: string
+                  example: '2026-06-30'
+                  format: date
+                  description: 截止日期
+                difficulty:
+                  type: string
+                  enum:
+                  - easy
+                  - medium
+                  - hard
+                  - adaptive
+                  description: 难度
+                dailyMinutes:
+                  type: integer
+                  example: 60
+                  description: 每日学习分钟数
+                preferredTimeSlots:
+                  type: array
+                  items:
+                    type: string
+                  description: 偏好的学习时间段
+              required:
+              - courseId
+              - goal
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `courseId` | 是 | string | 课程 ID，对应 course.id |
+
+        | Body | `goal` | 是 | string | 学习目标 |
+
+        | Body | `deadline` | 否 | string | 截止日期 |
+
+        | Body | `difficulty` | 否 | string | 难度 |
+
+        | Body | `dailyMinutes` | 否 | integer | 每日学习分钟数 |
+
+        | Body | `preferredTimeSlots` | 否 | array<string> | 偏好的学习时间段 |
+
+
+        主要数据表：study_plan、study_task、knowledge_node、knowledge_node_relation、user_knowledge_progress'
+  /api/v1/learning-plans/{planId}/adjust:
+    put:
+      tags:
+      - 学习计划日历与拓扑
+      summary: 调整学习计划
+      parameters:
+      - $ref: '#/components/parameters/planId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                reason:
+                  type: string
+                  description: 操作原因
+                strategy:
+                  type: string
+                  enum:
+                  - speed_up
+                  - slow_down
+                  - remove_redundant_review
+                  - add_review
+                  - manual
+                  description: 计划调整策略
+                taskIds:
+                  type: array
+                  items:
+                    type: string
+                  description: 学习任务 ID 列表，对应 study_task.id
+              required:
+              - reason
+              - strategy
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `planId` | 是 | string | 学习计划 ID，对应 study_plan.id |
+
+        | Body | `reason` | 是 | string | 操作原因 |
+
+        | Body | `strategy` | 是 | string | 计划调整策略 |
+
+        | Body | `taskIds` | 否 | array<string> | 学习任务 ID 列表，对应 study_task.id |
+
+
+        主要数据表：study_plan、study_task、knowledge_node、knowledge_node_relation、user_knowledge_progress'
+  /api/v1/learning-plans/{planId}/topology:
+    get:
+      tags:
+      - 学习计划日历与拓扑
+      summary: 获取学习拓扑
+      parameters:
+      - $ref: '#/components/parameters/planId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `planId` | 是 | string | 学习计划 ID，对应 study_plan.id |
+
+
+        主要数据表：study_plan、study_task、knowledge_node、knowledge_node_relation、user_knowledge_progress'
+  /api/v1/learning-plans/{planId}/topology/nodes/{nodeId}/resource-network:
+    get:
+      tags:
+      - 学习计划日历与拓扑
+      summary: 获取知识点资源网络图
+      parameters:
+      - $ref: '#/components/parameters/planId'
+      - $ref: '#/components/parameters/nodeId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `planId` | 是 | string | 学习计划 ID，对应 study_plan.id |
+
+        | Path | `nodeId` | 是 | string | 知识点节点 ID，对应 knowledge_node.id，兼容 knowledge_node.node_code |
+
+
+        主要数据表：study_plan、study_task、knowledge_node、knowledge_node_relation、user_knowledge_progress'
+  /api/v1/learning-plans/{planId}/topology/nodes/{nodeId}/resources:
+    get:
+      tags:
+      - 学习计划日历与拓扑
+      summary: 获取知识点资源网络图列表视图
+      parameters:
+      - $ref: '#/components/parameters/planId'
+      - $ref: '#/components/parameters/nodeId'
+      - $ref: '#/components/parameters/type'
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          $ref: '#/components/responses/PageSuccess'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `planId` | 是 | string | 学习计划 ID，对应 study_plan.id |
+
+        | Path | `nodeId` | 是 | string | 知识点节点 ID，对应 knowledge_node.id，兼容 knowledge_node.node_code |
+
+        | Query | `type` | 否 | string | 类型筛选，具体枚举见接口文档数据字典 |
+
+        | Query | `page` | 否 | integer | 页码，从 1 开始 |
+
+        | Query | `pageSize` | 否 | integer | 每页数量 |
+
+
+        主要数据表：study_plan、study_task、knowledge_node、knowledge_node_relation、user_knowledge_progress'
+  /api/v1/calendar/events:
+    get:
+      tags:
+      - 学习计划日历与拓扑
+      summary: 获取日历事件
+      parameters:
+      - name: month
+        in: query
+        schema:
+          type: string
+          example: 2026-05
+      - name: view
+        in: query
+        schema:
+          type: string
+          enum:
+          - month
+          - week
+          - day
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Query | `month` | 否 | string | 月份，格式 YYYY-MM |
+
+        | Query | `view` | 否 | string | 日历视图类型：month/week/day |
+
+
+        主要数据表：study_plan、study_task、knowledge_node、knowledge_node_relation、user_knowledge_progress'
+    post:
+      tags:
+      - 学习计划日历与拓扑
+      summary: 新建日程
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                title:
+                  type: string
+                  description: 标题
+                  example: 二叉搜索树章节课后练习
+                startTime:
+                  type: string
+                  format: date-time
+                  description: 开始时间
+                endTime:
+                  type: string
+                  format: date-time
+                  description: 结束时间
+                type:
+                  type: string
+                  enum:
+                  - learn
+                  - review
+                  - practice
+                  - exam
+                  - custom
+                  description: type
+                planId:
+                  type: string
+                  description: 学习计划 ID，对应 study_plan.id
+                taskId:
+                  type: string
+                  description: 学习任务 ID，对应 study_task.id
+                resourceId:
+                  type: string
+                  description: 学习资源 ID，对应 learning_resource.id
+                remark:
+                  type: string
+                  description: 备注
+              required:
+              - title
+              - startTime
+              - endTime
+              - type
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `title` | 是 | string | 标题 |
+
+        | Body | `startTime` | 是 | string | 开始时间 |
+
+        | Body | `endTime` | 是 | string | 结束时间 |
+
+        | Body | `type` | 是 | string | type |
+
+        | Body | `planId` | 否 | string | 学习计划 ID，对应 study_plan.id |
+
+        | Body | `taskId` | 否 | string | 学习任务 ID，对应 study_task.id |
+
+        | Body | `resourceId` | 否 | string | 学习资源 ID，对应 learning_resource.id |
+
+        | Body | `remark` | 否 | string | 备注 |
+
+
+        主要数据表：study_plan、study_task、knowledge_node、knowledge_node_relation、user_knowledge_progress'
+  /api/v1/calendar/events/{eventId}:
+    put:
+      tags:
+      - 学习计划日历与拓扑
+      summary: 更新日程
+      parameters:
+      - $ref: '#/components/parameters/eventId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                title:
+                  type: string
+                  description: 标题
+                  example: 二叉搜索树章节课后练习
+                startTime:
+                  type: string
+                  format: date-time
+                  description: 开始时间
+                endTime:
+                  type: string
+                  format: date-time
+                  description: 结束时间
+                type:
+                  type: string
+                  enum:
+                  - learn
+                  - review
+                  - practice
+                  - exam
+                  - custom
+                  description: type
+                status:
+                  type: string
+                  enum:
+                  - pending
+                  - in_progress
+                  - completed
+                  - overdue
+                  description: status
+                remark:
+                  type: string
+                  description: 备注
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `eventId` | 是 | string | 日历事件/学习任务 ID，对应 study_task.id |
+
+        | Body | `title` | 否 | string | 标题 |
+
+        | Body | `startTime` | 否 | string | 开始时间 |
+
+        | Body | `endTime` | 否 | string | 结束时间 |
+
+        | Body | `type` | 否 | string | type |
+
+        | Body | `status` | 否 | string | status |
+
+        | Body | `remark` | 否 | string | 备注 |
+
+
+        主要数据表：study_plan、study_task、knowledge_node、knowledge_node_relation、user_knowledge_progress'
+    delete:
+      tags:
+      - 学习计划日历与拓扑
+      summary: 删除日程
+      parameters:
+      - $ref: '#/components/parameters/eventId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `eventId` | 是 | string | 日历事件/学习任务 ID，对应 study_task.id |
+
+
+        主要数据表：study_plan、study_task、knowledge_node、knowledge_node_relation、user_knowledge_progress'
+  /api/v1/skill-tree:
+    get:
+      tags:
+      - 技能树
+      summary: 获取技能树
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | 无 | - | - | - | 无参数 |
+
+
+        主要数据表：knowledge_node、knowledge_node_relation、user_knowledge_progress、user_achievement'
+  /api/v1/skill-tree/nodes/{nodeId}/light-up:
+    post:
+      tags:
+      - 技能树
+      summary: 点亮技能节点
+      parameters:
+      - $ref: '#/components/parameters/nodeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                evidenceType:
+                  type: string
+                  enum:
+                  - resource
+                  - exercise_set
+                  - manual
+                  description: 点亮依据类型
+                evidenceId:
+                  type: string
+                  description: 点亮依据 ID
+                score:
+                  type: number
+                  description: 得分
+                remark:
+                  type: string
+                  description: 备注
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `nodeId` | 是 | string | 知识点节点 ID，对应 knowledge_node.id，兼容 knowledge_node.node_code |
+
+        | Body | `evidenceType` | 否 | string | 点亮依据类型 |
+
+        | Body | `evidenceId` | 否 | string | 点亮依据 ID |
+
+        | Body | `score` | 否 | number | 得分 |
+
+        | Body | `remark` | 否 | string | 备注 |
+
+
+        主要数据表：knowledge_node、knowledge_node_relation、user_knowledge_progress、user_achievement'
+  /api/v1/exercise-sets:
+    get:
+      tags:
+      - 练习与测试
+      summary: 获取练习/测试列表
+      parameters:
+      - $ref: '#/components/parameters/planIdQuery'
+      - $ref: '#/components/parameters/nodeIdQuery'
+      - $ref: '#/components/parameters/status'
+      - $ref: '#/components/parameters/type'
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          $ref: '#/components/responses/PageSuccess'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Query | `planId` | 否 | string | 学习计划 ID，对应 study_plan.id |
+
+        | Query | `nodeId` | 否 | string | 知识点节点 ID，对应 knowledge_node.id，兼容 knowledge_node.node_code |
+
+        | Query | `status` | 否 | string | 状态筛选，具体枚举见接口文档数据字典 |
+
+        | Query | `type` | 否 | string | 类型筛选，具体枚举见接口文档数据字典 |
+
+        | Query | `page` | 否 | integer | 页码，从 1 开始 |
+
+        | Query | `pageSize` | 否 | integer | 每页数量 |
+
+
+        主要数据表：practice_set、practice_set_question、question_bank、user_question_record、evaluation_report'
+  /api/v1/exercise-sets/{exerciseSetId}:
+    get:
+      tags:
+      - 练习与测试
+      summary: 获取练习/测试详情
+      parameters:
+      - $ref: '#/components/parameters/exerciseSetId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `exerciseSetId` | 是 | string | 练习/测试集合 ID，对应 practice_set.id |
+
+
+        主要数据表：practice_set、practice_set_question、question_bank、user_question_record、evaluation_report'
+  /api/v1/exercise-sets/{exerciseSetId}/questions/{questionId}:
+    get:
+      tags:
+      - 练习与测试
+      summary: 获取单题答题详情
+      parameters:
+      - $ref: '#/components/parameters/exerciseSetId'
+      - $ref: '#/components/parameters/questionId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `exerciseSetId` | 是 | string | 练习/测试集合 ID，对应 practice_set.id |
+
+        | Path | `questionId` | 是 | string | 题目 ID，对应 question_bank.id |
+
+
+        主要数据表：practice_set、practice_set_question、question_bank、user_question_record、evaluation_report'
+  /api/v1/exercise-sets/{exerciseSetId}/questions/{questionId}/answer:
+    put:
+      tags:
+      - 练习与测试
+      summary: 保存单题答案
+      parameters:
+      - $ref: '#/components/parameters/exerciseSetId'
+      - $ref: '#/components/parameters/questionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                answer:
+                  oneOf:
+                  - type: string
+                  - type: array
+                    items:
+                      type: string
+                  - type: object
+                    additionalProperties: true
+                  description: 用户答案，按题型可为字符串、数组或对象
+                durationSeconds:
+                  type: integer
+                  description: 耗时或资源总时长，单位秒
+                flagged:
+                  type: boolean
+                  description: 是否标记题目
+                attachments:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: true
+                  description: 附件列表，对应 sys_oss_file
+              required:
+              - answer
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `exerciseSetId` | 是 | string | 练习/测试集合 ID，对应 practice_set.id |
+
+        | Path | `questionId` | 是 | string | 题目 ID，对应 question_bank.id |
+
+        | Body | `answer` | 是 | mixed | 用户答案，按题型可为字符串、数组或对象 |
+
+        | Body | `durationSeconds` | 否 | integer | 耗时或资源总时长，单位秒 |
+
+        | Body | `flagged` | 否 | boolean | 是否标记题目 |
+
+        | Body | `attachments` | 否 | array<object> | 附件列表，对应 sys_oss_file |
+
+
+        主要数据表：practice_set、practice_set_question、question_bank、user_question_record、evaluation_report'
+  /api/v1/exercise-sets/{exerciseSetId}/questions/{questionId}/flag:
+    put:
+      tags:
+      - 练习与测试
+      summary: 标记或取消标记题目
+      parameters:
+      - $ref: '#/components/parameters/exerciseSetId'
+      - $ref: '#/components/parameters/questionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                flagged:
+                  type: boolean
+                  example: true
+                  description: 是否标记题目
+              required:
+              - flagged
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `exerciseSetId` | 是 | string | 练习/测试集合 ID，对应 practice_set.id |
+
+        | Path | `questionId` | 是 | string | 题目 ID，对应 question_bank.id |
+
+        | Body | `flagged` | 是 | boolean | 是否标记题目 |
+
+
+        主要数据表：practice_set、practice_set_question、question_bank、user_question_record、evaluation_report'
+  /api/v1/exercise-sets/{exerciseSetId}/questions/{questionId}/hint:
+    post:
+      tags:
+      - 练习与测试
+      summary: 请求 Coach 提示
+      parameters:
+      - $ref: '#/components/parameters/exerciseSetId'
+      - $ref: '#/components/parameters/questionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                hintLevel:
+                  type: integer
+                  example: 1
+                  description: 提示等级
+                currentAnswer:
+                  oneOf:
+                  - type: string
+                  - type: array
+                    items:
+                      type: string
+                  - type: object
+                    additionalProperties: true
+                  description: 当前答案草稿
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `exerciseSetId` | 是 | string | 练习/测试集合 ID，对应 practice_set.id |
+
+        | Path | `questionId` | 是 | string | 题目 ID，对应 question_bank.id |
+
+        | Body | `hintLevel` | 否 | integer | 提示等级 |
+
+        | Body | `currentAnswer` | 否 | mixed | 当前答案草稿 |
+
+
+        主要数据表：practice_set、practice_set_question、question_bank、user_question_record、evaluation_report'
+  /api/v1/exercise-sets/{exerciseSetId}/submit:
+    post:
+      tags:
+      - 练习与测试
+      summary: 提交练习/测试
+      parameters:
+      - $ref: '#/components/parameters/exerciseSetId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                durationSeconds:
+                  type: integer
+                  description: 耗时或资源总时长，单位秒
+                answers:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: true
+                  description: 批量作答内容
+                forceSubmit:
+                  type: boolean
+                  example: false
+                  description: 是否强制提交
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `exerciseSetId` | 是 | string | 练习/测试集合 ID，对应 practice_set.id |
+
+        | Body | `durationSeconds` | 否 | integer | 耗时或资源总时长，单位秒 |
+
+        | Body | `answers` | 否 | array<object> | 批量作答内容 |
+
+        | Body | `forceSubmit` | 否 | boolean | 是否强制提交 |
+
+
+        主要数据表：practice_set、practice_set_question、question_bank、user_question_record、evaluation_report'
+  /api/v1/exercise-sets/{exerciseSetId}/questions/{questionId}/code-run:
+    post:
+      tags:
+      - 练习与测试
+      summary: 提交代码题即时评测
+      parameters:
+      - $ref: '#/components/parameters/exerciseSetId'
+      - $ref: '#/components/parameters/questionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                language:
+                  type: string
+                  example: javascript
+                  description: 代码语言
+                code:
+                  type: string
+                  description: 验证码或代码内容，按接口上下文区分
+                input:
+                  type: string
+                  description: 自定义输入
+                testcaseIds:
+                  type: array
+                  items:
+                    type: string
+                  description: 测试用例 ID 列表
+              required:
+              - language
+              - code
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `exerciseSetId` | 是 | string | 练习/测试集合 ID，对应 practice_set.id |
+
+        | Path | `questionId` | 是 | string | 题目 ID，对应 question_bank.id |
+
+        | Body | `language` | 是 | string | 代码语言 |
+
+        | Body | `code` | 是 | string | 验证码或代码内容，按接口上下文区分 |
+
+        | Body | `input` | 否 | string | 自定义输入 |
+
+        | Body | `testcaseIds` | 否 | array<string> | 测试用例 ID 列表 |
+
+
+        主要数据表：practice_set、practice_set_question、question_bank、user_question_record、evaluation_report'
+  /api/v1/exercise-sets/attempts/{attemptId}/report:
+    get:
+      tags:
+      - 练习与测试
+      summary: 获取练习/测试报告
+      parameters:
+      - $ref: '#/components/parameters/attemptId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `attemptId` | 是 | string | 作答记录/评估报告 ID，对应 user_question_record.id 或 evaluation_report.id |
+
+
+        主要数据表：practice_set、practice_set_question、question_bank、user_question_record、evaluation_report'
+  /api/v1/articles:
+    get:
+      tags:
+      - 社区与文章
+      summary: 获取文章列表
+      parameters:
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/pageSize'
+      - name: category
+        in: query
+        schema:
+          type: string
+      - $ref: '#/components/parameters/keyword'
+      responses:
+        '200':
+          $ref: '#/components/responses/PageSuccess'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Query | `page` | 否 | integer | 页码，从 1 开始 |
+
+        | Query | `pageSize` | 否 | integer | 每页数量 |
+
+        | Query | `category` | 否 | string | category |
+
+        | Query | `keyword` | 否 | string | 搜索关键词 |
+
+
+        主要数据表：blog_post、blog_comment、blog_like、blog_favorite、blog_view_log'
+    post:
+      tags:
+      - 社区与文章
+      summary: 发布文章
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                title:
+                  type: string
+                  description: 标题
+                  example: 二叉搜索树章节课后练习
+                content:
+                  type: string
+                  description: 正文内容
+                  example: 这里是正文内容
+                summary:
+                  type: string
+                  description: 摘要
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  description: 标签列表
+                coverFileId:
+                  type: string
+                  description: 封面文件 ID，对应 sys_oss_file.id
+                visibility:
+                  type: string
+                  example: public
+                  enum:
+                  - public
+                  - private
+                  - friends
+                  description: 可见性
+              required:
+              - title
+              - content
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `title` | 是 | string | 标题 |
+
+        | Body | `content` | 是 | string | 正文内容 |
+
+        | Body | `summary` | 否 | string | 摘要 |
+
+        | Body | `tags` | 否 | array<string> | 标签列表 |
+
+        | Body | `coverFileId` | 否 | string | 封面文件 ID，对应 sys_oss_file.id |
+
+        | Body | `visibility` | 否 | string | 可见性 |
+
+
+        主要数据表：blog_post、blog_comment、blog_like、blog_favorite、blog_view_log'
+  /api/v1/articles/{articleId}:
+    get:
+      tags:
+      - 社区与文章
+      summary: 获取文章详情
+      parameters:
+      - $ref: '#/components/parameters/articleId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `articleId` | 是 | string | 文章 ID，对应 blog_post.id |
+
+
+        主要数据表：blog_post、blog_comment、blog_like、blog_favorite、blog_view_log'
+  /api/v1/articles/drafts:
+    post:
+      tags:
+      - 社区与文章
+      summary: 保存草稿
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                draftId:
+                  type: string
+                  description: 草稿 ID
+                title:
+                  type: string
+                  description: 标题
+                  example: 二叉搜索树章节课后练习
+                content:
+                  type: string
+                  description: 正文内容
+                  example: 这里是正文内容
+                summary:
+                  type: string
+                  description: 摘要
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  description: 标签列表
+                coverFileId:
+                  type: string
+                  description: 封面文件 ID，对应 sys_oss_file.id
+              required:
+              - title
+              - content
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `draftId` | 否 | string | 草稿 ID |
+
+        | Body | `title` | 是 | string | 标题 |
+
+        | Body | `content` | 是 | string | 正文内容 |
+
+        | Body | `summary` | 否 | string | 摘要 |
+
+        | Body | `tags` | 否 | array<string> | 标签列表 |
+
+        | Body | `coverFileId` | 否 | string | 封面文件 ID，对应 sys_oss_file.id |
+
+
+        主要数据表：blog_post、blog_comment、blog_like、blog_favorite、blog_view_log'
+  /api/v1/articles/polish:
+    post:
+      tags:
+      - 社区与文章
+      summary: Horizon 文章润色
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                title:
+                  type: string
+                  description: 标题
+                  example: 二叉搜索树章节课后练习
+                content:
+                  type: string
+                  description: 正文内容
+                  example: 这里是正文内容
+                tone:
+                  type: string
+                  enum:
+                  - friendly
+                  - professional
+                  - concise
+                  - academic
+                  description: 润色语气
+                agentId:
+                  type: string
+                  example: horizon
+                  description: 智能体 ID，如 nebula/coach/sage
+              required:
+              - content
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `title` | 否 | string | 标题 |
+
+        | Body | `content` | 是 | string | 正文内容 |
+
+        | Body | `tone` | 否 | string | 润色语气 |
+
+        | Body | `agentId` | 否 | string | 智能体 ID，如 nebula/coach/sage |
+
+
+        主要数据表：blog_post、blog_comment、blog_like、blog_favorite、blog_view_log'
+  /api/v1/articles/{articleId}/like:
+    post:
+      tags:
+      - 社区与文章
+      summary: 点赞文章
+      parameters:
+      - $ref: '#/components/parameters/articleId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `articleId` | 是 | string | 文章 ID，对应 blog_post.id |
+
+
+        主要数据表：blog_post、blog_comment、blog_like、blog_favorite、blog_view_log'
+    delete:
+      tags:
+      - 社区与文章
+      summary: 取消点赞文章
+      parameters:
+      - $ref: '#/components/parameters/articleId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `articleId` | 是 | string | 文章 ID，对应 blog_post.id |
+
+
+        主要数据表：blog_post、blog_comment、blog_like、blog_favorite、blog_view_log'
+  /api/v1/articles/{articleId}/collect:
+    post:
+      tags:
+      - 社区与文章
+      summary: 收藏文章
+      parameters:
+      - $ref: '#/components/parameters/articleId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `articleId` | 是 | string | 文章 ID，对应 blog_post.id |
+
+
+        主要数据表：blog_post、blog_comment、blog_like、blog_favorite、blog_view_log'
+    delete:
+      tags:
+      - 社区与文章
+      summary: 取消收藏文章
+      parameters:
+      - $ref: '#/components/parameters/articleId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `articleId` | 是 | string | 文章 ID，对应 blog_post.id |
+
+
+        主要数据表：blog_post、blog_comment、blog_like、blog_favorite、blog_view_log'
+  /api/v1/users/{userId}/follow:
+    post:
+      tags:
+      - 社区与文章
+      summary: 关注用户
+      parameters:
+      - $ref: '#/components/parameters/userId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `userId` | 是 | string | 用户 ID，对应 sys_user.id |
+
+
+        主要数据表：blog_post、blog_comment、blog_like、blog_favorite、blog_view_log'
+    delete:
+      tags:
+      - 社区与文章
+      summary: 取消关注用户
+      parameters:
+      - $ref: '#/components/parameters/userId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `userId` | 是 | string | 用户 ID，对应 sys_user.id |
+
+
+        主要数据表：blog_post、blog_comment、blog_like、blog_favorite、blog_view_log'
+  /api/v1/articles/{articleId}/comments:
+    get:
+      tags:
+      - 社区与文章
+      summary: 获取评论
+      parameters:
+      - $ref: '#/components/parameters/articleId'
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          $ref: '#/components/responses/PageSuccess'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `articleId` | 是 | string | 文章 ID，对应 blog_post.id |
+
+        | Query | `page` | 否 | integer | 页码，从 1 开始 |
+
+        | Query | `pageSize` | 否 | integer | 每页数量 |
+
+
+        主要数据表：blog_post、blog_comment、blog_like、blog_favorite、blog_view_log'
+    post:
+      tags:
+      - 社区与文章
+      summary: 发布评论
+      parameters:
+      - $ref: '#/components/parameters/articleId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                content:
+                  type: string
+                  description: 正文内容
+                  example: 这里是正文内容
+                parentId:
+                  type: string
+                  description: 父评论 ID，对应 blog_comment.id
+                attachments:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: true
+                  description: 附件列表，对应 sys_oss_file
+              required:
+              - content
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `articleId` | 是 | string | 文章 ID，对应 blog_post.id |
+
+        | Body | `content` | 是 | string | 正文内容 |
+
+        | Body | `parentId` | 否 | string | 父评论 ID，对应 blog_comment.id |
+
+        | Body | `attachments` | 否 | array<object> | 附件列表，对应 sys_oss_file |
+
+
+        主要数据表：blog_post、blog_comment、blog_like、blog_favorite、blog_view_log'
+  /api/v1/chats:
+    get:
+      tags:
+      - 消息私信与群聊
+      summary: 获取会话列表
+      parameters:
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/pageSize'
+      - $ref: '#/components/parameters/keyword'
+      responses:
+        '200':
+          $ref: '#/components/responses/PageSuccess'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Query | `page` | 否 | integer | 页码，从 1 开始 |
+
+        | Query | `pageSize` | 否 | integer | 每页数量 |
+
+        | Query | `keyword` | 否 | string | 搜索关键词 |
+
+
+        主要数据表：im_conversation、im_message、im_message_read、user_friend、sys_chat_group、sys_group_member'
+  /api/v1/chats/{chatId}/messages:
+    get:
+      tags:
+      - 消息私信与群聊
+      summary: 获取聊天记录
+      parameters:
+      - $ref: '#/components/parameters/chatId'
+      - name: before
+        in: query
+        schema:
+          type: string
+      - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          $ref: '#/components/responses/PageSuccess'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `chatId` | 是 | string | 聊天会话 ID，对应 im_conversation.id |
+
+        | Query | `before` | 否 | string | 游标消息 ID，查询该消息之前的记录 |
+
+        | Query | `pageSize` | 否 | integer | 每页数量 |
+
+
+        主要数据表：im_conversation、im_message、im_message_read、user_friend、sys_chat_group、sys_group_member'
+    post:
+      tags:
+      - 消息私信与群聊
+      summary: 发送消息
+      parameters:
+      - $ref: '#/components/parameters/chatId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                content:
+                  type: string
+                  description: 正文内容
+                  example: 这里是正文内容
+                messageType:
+                  type: string
+                  example: text
+                  enum:
+                  - text
+                  - image
+                  - file
+                  - mixed
+                  description: 消息类型
+                attachments:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: true
+                  description: 附件列表，对应 sys_oss_file
+              required:
+              - content
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `chatId` | 是 | string | 聊天会话 ID，对应 im_conversation.id |
+
+        | Body | `content` | 是 | string | 正文内容 |
+
+        | Body | `messageType` | 否 | string | 消息类型 |
+
+        | Body | `attachments` | 否 | array<object> | 附件列表，对应 sys_oss_file |
+
+
+        主要数据表：im_conversation、im_message、im_message_read、user_friend、sys_chat_group、sys_group_member'
+  /api/v1/chats/private:
+    post:
+      tags:
+      - 消息私信与群聊
+      summary: 创建私聊
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                targetUserId:
+                  type: string
+                  description: 目标用户 ID，对应 sys_user.id
+                initialMessage:
+                  type: string
+                  description: 创建会话时的首条消息
+              required:
+              - targetUserId
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `targetUserId` | 是 | string | 目标用户 ID，对应 sys_user.id |
+
+        | Body | `initialMessage` | 否 | string | 创建会话时的首条消息 |
+
+
+        主要数据表：im_conversation、im_message、im_message_read、user_friend、sys_chat_group、sys_group_member'
+  /api/v1/chats/groups:
+    post:
+      tags:
+      - 消息私信与群聊
+      summary: 创建群聊
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                name:
+                  type: string
+                  description: 名称
+                memberIds:
+                  type: array
+                  items:
+                    type: string
+                  description: 成员用户 ID 列表
+                avatar:
+                  type: string
+                  description: 头像地址，对应 sys_user.avatar_url
+                announcement:
+                  type: string
+                  description: 群公告
+              required:
+              - name
+              - memberIds
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `name` | 是 | string | 名称 |
+
+        | Body | `memberIds` | 是 | array<string> | 成员用户 ID 列表 |
+
+        | Body | `avatar` | 否 | string | 头像地址，对应 sys_user.avatar_url |
+
+        | Body | `announcement` | 否 | string | 群公告 |
+
+
+        主要数据表：im_conversation、im_message、im_message_read、user_friend、sys_chat_group、sys_group_member'
+  /api/v1/friend-requests:
+    post:
+      tags:
+      - 消息私信与群聊
+      summary: 发起好友申请
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                targetUserId:
+                  type: string
+                  description: 目标用户 ID，对应 sys_user.id
+                message:
+                  type: string
+                  description: message
+              required:
+              - targetUserId
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `targetUserId` | 是 | string | 目标用户 ID，对应 sys_user.id |
+
+        | Body | `message` | 否 | string | message |
+
+
+        主要数据表：im_conversation、im_message、im_message_read、user_friend、sys_chat_group、sys_group_member'
+  /api/v1/friend-requests/{requestId}:
+    put:
+      tags:
+      - 消息私信与群聊
+      summary: 处理好友申请
+      parameters:
+      - $ref: '#/components/parameters/requestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                action:
+                  type: string
+                  enum:
+                  - accept
+                  - reject
+                  - ignore
+                  description: 动作类型
+                remark:
+                  type: string
+                  description: 备注
+              required:
+              - action
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `requestId` | 是 | string | 好友申请 ID，对应 user_friend.id 或申请记录 |
+
+        | Body | `action` | 是 | string | 动作类型 |
+
+        | Body | `remark` | 否 | string | 备注 |
+
+
+        主要数据表：im_conversation、im_message、im_message_read、user_friend、sys_chat_group、sys_group_member'
+  /api/v1/notifications:
+    get:
+      tags:
+      - 通知
+      summary: 获取通知列表
+      parameters:
+      - $ref: '#/components/parameters/type'
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          $ref: '#/components/responses/PageSuccess'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Query | `type` | 否 | string | 类型筛选，具体枚举见接口文档数据字典 |
+
+        | Query | `page` | 否 | integer | 页码，从 1 开始 |
+
+        | Query | `pageSize` | 否 | integer | 每页数量 |
+
+
+        主要数据表：通知推送服务、user_settings、im_message_read'
+  /api/v1/notifications/{notificationId}/read:
+    put:
+      tags:
+      - 通知
+      summary: 标记通知已读
+      parameters:
+      - $ref: '#/components/parameters/notificationId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `notificationId` | 是 | string | 通知 ID |
+
+
+        主要数据表：通知推送服务、user_settings、im_message_read'
+  /api/v1/notifications/read-all:
+    put:
+      tags:
+      - 通知
+      summary: 全部通知已读
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | 无 | - | - | - | 无参数 |
+
+
+        主要数据表：通知推送服务、user_settings、im_message_read'
+  /api/v1/notifications/{notificationId}:
+    delete:
+      tags:
+      - 通知
+      summary: 删除通知
+      parameters:
+      - $ref: '#/components/parameters/notificationId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `notificationId` | 是 | string | 通知 ID |
+
+
+        主要数据表：通知推送服务、user_settings、im_message_read'
+  /api/v1/notifications/{notificationId}/actions:
+    post:
+      tags:
+      - 通知
+      summary: 通知动作回调
+      parameters:
+      - $ref: '#/components/parameters/notificationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                action:
+                  type: string
+                  description: 动作类型
+                payload:
+                  type: object
+                  additionalProperties: true
+                  description: 动作扩展参数
+              required:
+              - action
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `notificationId` | 是 | string | 通知 ID |
+
+        | Body | `action` | 是 | string | 动作类型 |
+
+        | Body | `payload` | 否 | object | 动作扩展参数 |
+
+
+        主要数据表：通知推送服务、user_settings、im_message_read'
+  /api/v1/settings:
+    get:
+      tags:
+      - 设置
+      summary: 获取设置
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | 无 | - | - | - | 无参数 |
+
+
+        主要数据表：user_settings、user_profile'
+    put:
+      tags:
+      - 设置
+      summary: 更新设置
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                theme:
+                  type: string
+                  enum:
+                  - light
+                  - dark
+                  - system
+                  description: 主题
+                language:
+                  type: string
+                  description: 代码语言
+                  example: javascript
+                notification:
+                  type: object
+                  additionalProperties: true
+                  description: 通知设置
+                privacy:
+                  type: object
+                  additionalProperties: true
+                  description: 隐私设置
+                learningPreference:
+                  type: object
+                  additionalProperties: true
+                  description: 学习偏好
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `theme` | 否 | string | 主题 |
+
+        | Body | `language` | 否 | string | 代码语言 |
+
+        | Body | `notification` | 否 | object | 通知设置 |
+
+        | Body | `privacy` | 否 | object | 隐私设置 |
+
+        | Body | `learningPreference` | 否 | object | 学习偏好 |
+
+
+        主要数据表：user_settings、user_profile'
+  /api/v1/settings/cache/clear:
+    post:
+      tags:
+      - 设置
+      summary: 清理缓存
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                cacheTypes:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                    - resource
+                    - image
+                    - video
+                    - agent
+                    - all
+                  description: 需要清理的缓存类型
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `cacheTypes` | 否 | array<string> | 需要清理的缓存类型 |
+
+
+        主要数据表：user_settings、user_profile'
+  /api/v1/user/devices:
+    get:
+      tags:
+      - 设备与安全
+      summary: 获取登录设备
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | 无 | - | - | - | 无参数 |
+
+
+        主要数据表：user_login_session、sys_user'
+  /api/v1/user/devices/{deviceId}:
+    delete:
+      tags:
+      - 设备与安全
+      summary: 下线指定设备
+      parameters:
+      - $ref: '#/components/parameters/deviceId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `deviceId` | 是 | string | 登录设备/会话 ID，对应 user_login_session.id |
+
+
+        主要数据表：user_login_session、sys_user'
+  /api/v1/user/password:
+    put:
+      tags:
+      - 设备与安全
+      summary: 修改密码
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                oldPassword:
+                  type: string
+                  description: 旧密码
+                newPassword:
+                  type: string
+                  description: 新密码
+              required:
+              - oldPassword
+              - newPassword
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `oldPassword` | 是 | string | 旧密码 |
+
+        | Body | `newPassword` | 是 | string | 新密码 |
+
+
+        主要数据表：user_login_session、sys_user'
+  /api/v1/user/email:
+    put:
+      tags:
+      - 设备与安全
+      summary: 绑定或更换邮箱
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: 邮箱，对应 sys_user.email
+                  example: spark@example.com
+                code:
+                  type: string
+                  description: 验证码或代码内容，按接口上下文区分
+                password:
+                  type: string
+                  description: 密码，服务端加密后写入 sys_user.password_hash
+                  example: '12345678'
+              required:
+              - email
+              - code
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `email` | 是 | string | 邮箱，对应 sys_user.email |
+
+        | Body | `code` | 是 | string | 验证码或代码内容，按接口上下文区分 |
+
+        | Body | `password` | 否 | string | 密码，服务端加密后写入 sys_user.password_hash |
+
+
+        主要数据表：user_login_session、sys_user'
+  /api/v1/uploads/token:
+    post:
+      tags:
+      - 文件上传
+      summary: 获取上传凭证
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                fileName:
+                  type: string
+                  description: 文件名
+                mimeType:
+                  type: string
+                  description: 文件 MIME 类型
+                size:
+                  type: integer
+                  description: 文件大小，单位字节
+                bizType:
+                  type: string
+                  enum:
+                  - avatar
+                  - resource
+                  - article
+                  - kb_document
+                  - chat
+                  description: 文件业务类型
+                checksum:
+                  type: string
+                  description: 文件校验值
+              required:
+              - fileName
+              - mimeType
+              - size
+              - bizType
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `fileName` | 是 | string | 文件名 |
+
+        | Body | `mimeType` | 是 | string | 文件 MIME 类型 |
+
+        | Body | `size` | 是 | integer | 文件大小，单位字节 |
+
+        | Body | `bizType` | 是 | string | 文件业务类型 |
+
+        | Body | `checksum` | 否 | string | 文件校验值 |
+
+
+        主要数据表：sys_oss_file'
+  /api/v1/uploads/complete:
+    post:
+      tags:
+      - 文件上传
+      summary: 提交上传完成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                fileKey:
+                  type: string
+                  description: 对象存储文件 Key
+                fileName:
+                  type: string
+                  description: 文件名
+                mimeType:
+                  type: string
+                  description: 文件 MIME 类型
+                size:
+                  type: integer
+                  description: 文件大小，单位字节
+                bizType:
+                  type: string
+                  description: 文件业务类型
+                etag:
+                  type: string
+                  description: 对象存储 ETag
+              required:
+              - fileKey
+              - fileName
+              - mimeType
+              - size
+              - bizType
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `fileKey` | 是 | string | 对象存储文件 Key |
+
+        | Body | `fileName` | 是 | string | 文件名 |
+
+        | Body | `mimeType` | 是 | string | 文件 MIME 类型 |
+
+        | Body | `size` | 是 | integer | 文件大小，单位字节 |
+
+        | Body | `bizType` | 是 | string | 文件业务类型 |
+
+        | Body | `etag` | 否 | string | 对象存储 ETag |
+
+
+        主要数据表：sys_oss_file'
+  /api/v1/manage/auth/login:
+    post:
+      tags:
+      - Manage管理端
+      summary: 管理端登录
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                account:
+                  type: string
+                  description: 邮箱或用户名，对应 sys_user.email/sys_user.username
+                  example: spark@example.com
+                password:
+                  type: string
+                  description: 密码，服务端加密后写入 sys_user.password_hash
+                  example: '12345678'
+                captcha:
+                  type: string
+                  description: 验证码
+              required:
+              - account
+              - password
+      responses:
+        '200':
+          $ref: '#/components/responses/AuthSuccess'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `account` | 是 | string | 邮箱或用户名，对应 sys_user.email/sys_user.username |
+
+        | Body | `password` | 是 | string | 密码，服务端加密后写入 sys_user.password_hash |
+
+        | Body | `captcha` | 否 | string | 验证码 |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+  /api/v1/manage/dashboard/overview:
+    get:
+      tags:
+      - Manage管理端
+      summary: 数据看板
+      parameters:
+      - $ref: '#/components/parameters/startDate'
+      - $ref: '#/components/parameters/endDate'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Query | `startDate` | 否 | string | 开始日期 |
+
+        | Query | `endDate` | 否 | string | 结束日期 |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+  /api/v1/manage/users:
+    get:
+      tags:
+      - Manage管理端
+      summary: 用户管理列表
+      parameters:
+      - $ref: '#/components/parameters/keyword'
+      - $ref: '#/components/parameters/status'
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          $ref: '#/components/responses/PageSuccess'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Query | `keyword` | 否 | string | 搜索关键词 |
+
+        | Query | `status` | 否 | string | 状态筛选，具体枚举见接口文档数据字典 |
+
+        | Query | `page` | 否 | integer | 页码，从 1 开始 |
+
+        | Query | `pageSize` | 否 | integer | 每页数量 |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+  /api/v1/manage/users/{userId}/actions:
+    post:
+      tags:
+      - Manage管理端
+      summary: 用户封禁、解封与警告
+      parameters:
+      - $ref: '#/components/parameters/userId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                action:
+                  type: string
+                  enum:
+                  - ban
+                  - unban
+                  - warn
+                  - reset_password
+                  description: 动作类型
+                reason:
+                  type: string
+                  description: 操作原因
+                durationDays:
+                  type: integer
+                  description: 处理持续天数
+              required:
+              - action
+              - reason
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `userId` | 是 | string | 用户 ID，对应 sys_user.id |
+
+        | Body | `action` | 是 | string | 动作类型 |
+
+        | Body | `reason` | 是 | string | 操作原因 |
+
+        | Body | `durationDays` | 否 | integer | 处理持续天数 |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+  /api/v1/manage/users/{userId}/learning-trace:
+    get:
+      tags:
+      - Manage管理端
+      summary: 查看用户学习轨迹
+      parameters:
+      - $ref: '#/components/parameters/userId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `userId` | 是 | string | 用户 ID，对应 sys_user.id |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+  /api/v1/manage/knowledge-base/documents:
+    get:
+      tags:
+      - Manage管理端
+      summary: 知识库文档列表
+      parameters:
+      - $ref: '#/components/parameters/keyword'
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          $ref: '#/components/responses/PageSuccess'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Query | `keyword` | 否 | string | 搜索关键词 |
+
+        | Query | `page` | 否 | integer | 页码，从 1 开始 |
+
+        | Query | `pageSize` | 否 | integer | 每页数量 |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+    post:
+      tags:
+      - Manage管理端
+      summary: 上传知识库文档
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                title:
+                  type: string
+                  description: 标题
+                  example: 二叉搜索树章节课后练习
+                sourceType:
+                  type: string
+                  enum:
+                  - official
+                  - user
+                  - uploaded
+                  description: 文档来源类型
+                docType:
+                  type: string
+                  enum:
+                  - pdf
+                  - word
+                  - md
+                  - code
+                  description: 文档类型
+                fileId:
+                  type: string
+                  description: 文件 ID，对应 sys_oss_file.id
+                kbDomain:
+                  type: string
+                  description: 知识库领域
+                parseStrategyId:
+                  type: string
+                  description: 解析策略 ID，对应 kb_parse_strategy.id
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  description: 标签列表
+              required:
+              - title
+              - sourceType
+              - docType
+              - kbDomain
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Body | `title` | 是 | string | 标题 |
+
+        | Body | `sourceType` | 是 | string | 文档来源类型 |
+
+        | Body | `docType` | 是 | string | 文档类型 |
+
+        | Body | `fileId` | 否 | string | 文件 ID，对应 sys_oss_file.id |
+
+        | Body | `kbDomain` | 是 | string | 知识库领域 |
+
+        | Body | `parseStrategyId` | 否 | string | 解析策略 ID，对应 kb_parse_strategy.id |
+
+        | Body | `tags` | 否 | array<string> | 标签列表 |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+  /api/v1/manage/knowledge-base/documents/{documentId}:
+    put:
+      tags:
+      - Manage管理端
+      summary: 更新知识库文档
+      parameters:
+      - $ref: '#/components/parameters/documentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                title:
+                  type: string
+                  description: 标题
+                  example: 二叉搜索树章节课后练习
+                kbDomain:
+                  type: string
+                  description: 知识库领域
+                parseStrategyId:
+                  type: string
+                  description: 解析策略 ID，对应 kb_parse_strategy.id
+                status:
+                  type: string
+                  enum:
+                  - enabled
+                  - disabled
+                  description: status
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  description: 标签列表
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `documentId` | 是 | string | 文档 ID，对应 learning_resource.id 或 kb_document.id |
+
+        | Body | `title` | 否 | string | 标题 |
+
+        | Body | `kbDomain` | 否 | string | 知识库领域 |
+
+        | Body | `parseStrategyId` | 否 | string | 解析策略 ID，对应 kb_parse_strategy.id |
+
+        | Body | `status` | 否 | string | status |
+
+        | Body | `tags` | 否 | array<string> | 标签列表 |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+    delete:
+      tags:
+      - Manage管理端
+      summary: 删除知识库文档
+      parameters:
+      - $ref: '#/components/parameters/documentId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `documentId` | 是 | string | 文档 ID，对应 learning_resource.id 或 kb_document.id |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+  /api/v1/manage/knowledge-base/documents/{documentId}/parse-status:
+    get:
+      tags:
+      - Manage管理端
+      summary: 文档解析入库状态
+      parameters:
+      - $ref: '#/components/parameters/documentId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `documentId` | 是 | string | 文档 ID，对应 learning_resource.id 或 kb_document.id |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+  /api/v1/manage/ai-disputes:
+    get:
+      tags:
+      - Manage管理端
+      summary: 争议内容工单列表
+      parameters:
+      - $ref: '#/components/parameters/status'
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          $ref: '#/components/responses/PageSuccess'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Query | `status` | 否 | string | 状态筛选，具体枚举见接口文档数据字典 |
+
+        | Query | `page` | 否 | integer | 页码，从 1 开始 |
+
+        | Query | `pageSize` | 否 | integer | 每页数量 |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+  /api/v1/manage/ai-disputes/{disputeId}:
+    put:
+      tags:
+      - Manage管理端
+      summary: 处理争议内容
+      parameters:
+      - $ref: '#/components/parameters/disputeId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                status:
+                  type: string
+                  enum:
+                  - reviewed
+                  - fixed
+                  - rejected
+                  description: status
+                result:
+                  type: string
+                  description: 处理结果
+                remark:
+                  type: string
+                  description: 备注
+              required:
+              - status
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `disputeId` | 是 | string | 争议工单 ID，对应 feedback_ticket.id |
+
+        | Body | `status` | 是 | string | status |
+
+        | Body | `result` | 否 | string | 处理结果 |
+
+        | Body | `remark` | 否 | string | 备注 |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+  /api/v1/manage/storage/overview:
+    get:
+      tags:
+      - Manage管理端
+      summary: 资源存储监控
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | 无 | - | - | - | 无参数 |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+  /api/v1/manage/resources:
+    get:
+      tags:
+      - Manage管理端
+      summary: 管理历史生成资源
+      parameters:
+      - $ref: '#/components/parameters/type'
+      - name: qualityStatus
+        in: query
+        schema:
+          type: string
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          $ref: '#/components/responses/PageSuccess'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Query | `type` | 否 | string | 类型筛选，具体枚举见接口文档数据字典 |
+
+        | Query | `qualityStatus` | 否 | string | 资源质量状态筛选 |
+
+        | Query | `page` | 否 | integer | 页码，从 1 开始 |
+
+        | Query | `pageSize` | 否 | integer | 每页数量 |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+  /api/v1/manage/resources/{resourceId}:
+    delete:
+      tags:
+      - Manage管理端
+      summary: 删除历史生成资源
+      parameters:
+      - $ref: '#/components/parameters/resourceId'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `resourceId` | 是 | string | 学习资源 ID，对应 learning_resource.id |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+  /api/v1/manage/agent-prompts:
+    get:
+      tags:
+      - Manage管理端
+      summary: Prompt 配置列表
+      responses:
+        '200':
+          $ref: '#/components/responses/PageSuccess'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | 无 | - | - | - | 无参数 |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+  /api/v1/manage/agent-prompts/{promptId}:
+    put:
+      tags:
+      - Manage管理端
+      summary: 更新 Prompt 配置
+      parameters:
+      - $ref: '#/components/parameters/promptId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                promptName:
+                  type: string
+                  description: Prompt 名称
+                promptContent:
+                  type: string
+                  description: Prompt 内容
+                status:
+                  type: string
+                  enum:
+                  - enabled
+                  - disabled
+                  description: status
+                version:
+                  type: string
+                  description: 版本号
+              required:
+              - promptContent
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `promptId` | 是 | string | Prompt 配置 ID，对应 sys_agent_prompt.id |
+
+        | Body | `promptName` | 否 | string | Prompt 名称 |
+
+        | Body | `promptContent` | 是 | string | Prompt 内容 |
+
+        | Body | `status` | 否 | string | status |
+
+        | Body | `version` | 否 | string | 版本号 |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+  /api/v1/manage/moderation/content:
+    get:
+      tags:
+      - Manage管理端
+      summary: 内容 AI 审核列表
+      parameters:
+      - $ref: '#/components/parameters/status'
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          $ref: '#/components/responses/PageSuccess'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Query | `status` | 否 | string | 状态筛选，具体枚举见接口文档数据字典 |
+
+        | Query | `page` | 否 | integer | 页码，从 1 开始 |
+
+        | Query | `pageSize` | 否 | integer | 每页数量 |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+  /api/v1/manage/moderation/content/{recordId}:
+    put:
+      tags:
+      - Manage管理端
+      summary: 处理内容审核结果
+      parameters:
+      - $ref: '#/components/parameters/recordId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                status:
+                  type: string
+                  enum:
+                  - pass
+                  - risk
+                  - blocked
+                  - resolved
+                  description: status
+                reason:
+                  type: string
+                  description: 操作原因
+                action:
+                  type: string
+                  enum:
+                  - pass
+                  - block
+                  - hide
+                  - restore
+                  description: 动作类型
+              required:
+              - status
+              - action
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `recordId` | 是 | string | 审核记录 ID |
+
+        | Body | `status` | 是 | string | status |
+
+        | Body | `reason` | 否 | string | 操作原因 |
+
+        | Body | `action` | 是 | string | 动作类型 |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+  /api/v1/manage/moderation/behavior-alerts:
+    get:
+      tags:
+      - Manage管理端
+      summary: 用户行为风控预警
+      parameters:
+      - name: level
+        in: query
+        schema:
+          type: string
+      - $ref: '#/components/parameters/page'
+      - $ref: '#/components/parameters/pageSize'
+      responses:
+        '200':
+          $ref: '#/components/responses/PageSuccess'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Query | `level` | 否 | string | 风险等级筛选 |
+
+        | Query | `page` | 否 | integer | 页码，从 1 开始 |
+
+        | Query | `pageSize` | 否 | integer | 每页数量 |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+  /api/v1/manage/moderation/behavior-alerts/{alertId}:
+    put:
+      tags:
+      - Manage管理端
+      summary: 处理行为预警
+      parameters:
+      - $ref: '#/components/parameters/alertId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                status:
+                  type: string
+                  enum:
+                  - pending
+                  - resolved
+                  - ignored
+                  description: status
+                remark:
+                  type: string
+                  description: 备注
+                action:
+                  type: string
+                  enum:
+                  - warn
+                  - ban
+                  - ignore
+                  - follow_up
+                  description: 动作类型
+              required:
+              - status
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+      description: '参数设计：
+
+
+        | 位置 | 参数名 | 必填 | 类型 | 说明 |
+
+        | --- | --- | --- | --- | --- |
+
+        | Path | `alertId` | 是 | string | 行为预警 ID |
+
+        | Body | `status` | 是 | string | status |
+
+        | Body | `remark` | 否 | string | 备注 |
+
+        | Body | `action` | 否 | string | 动作类型 |
+
+
+        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+      description: 页码，从 1 开始
+    pageSize:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        default: 10
+        minimum: 1
+        maximum: 100
+      description: 每页数量
+    keyword:
+      name: keyword
+      in: query
+      schema:
+        type: string
+      description: 搜索关键词
+    type:
+      name: type
+      in: query
+      schema:
+        type: string
+      description: 类型筛选，具体枚举见接口文档数据字典
+    status:
+      name: status
+      in: query
+      schema:
+        type: string
+      description: 状态筛选，具体枚举见接口文档数据字典
+    startDate:
+      name: startDate
+      in: query
+      schema:
+        type: string
+        format: date
+      description: 开始日期
+    endDate:
+      name: endDate
+      in: query
+      schema:
+        type: string
+        format: date
+      description: 结束日期
+    userId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 用户 ID，对应 sys_user.id
+    collectionId:
+      name: collectionId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 收藏记录 ID，对应收藏/资源收藏表主键
+    sessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Agent 会话 ID，对应 agent_chat_session.id
+    messageIdQuery:
+      name: messageId
+      in: query
+      required: true
+      schema:
+        type: string
+      description: 消息 ID，对应 agent_chat_message.id 或 im_message.id
+    exploreId:
+      name: exploreId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 探索任务 ID，对应异步生成或探索记录
+    resourceId:
+      name: resourceId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 学习资源 ID，对应 learning_resource.id
+    readingId:
+      name: readingId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 拓展阅读资源 ID，对应 learning_resource.id
+    caseId:
+      name: caseId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 代码案例资源 ID，对应 learning_resource.id
+    videoId:
+      name: videoId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 视频资源 ID，对应 learning_resource.id
+    documentId:
+      name: documentId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 文档 ID，对应 learning_resource.id 或 kb_document.id
+    planId:
+      name: planId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 学习计划 ID，对应 study_plan.id
+    planIdQuery:
+      name: planId
+      in: query
+      schema:
+        type: string
+      description: 学习计划 ID，对应 study_plan.id
+    nodeId:
+      name: nodeId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 知识点节点 ID，对应 knowledge_node.id，兼容 knowledge_node.node_code
+    nodeIdQuery:
+      name: nodeId
+      in: query
+      schema:
+        type: string
+      description: 知识点节点 ID，对应 knowledge_node.id，兼容 knowledge_node.node_code
+    eventId:
+      name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 日历事件/学习任务 ID，对应 study_task.id
+    exerciseSetId:
+      name: exerciseSetId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 练习/测试集合 ID，对应 practice_set.id
+    questionId:
+      name: questionId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 题目 ID，对应 question_bank.id
+    attemptId:
+      name: attemptId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 作答记录/评估报告 ID，对应 user_question_record.id 或 evaluation_report.id
+    articleId:
+      name: articleId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 文章 ID，对应 blog_post.id
+    chatId:
+      name: chatId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 聊天会话 ID，对应 im_conversation.id
+    requestId:
+      name: requestId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 好友申请 ID，对应 user_friend.id 或申请记录
+    notificationId:
+      name: notificationId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 通知 ID
+    deviceId:
+      name: deviceId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 登录设备/会话 ID，对应 user_login_session.id
+    disputeId:
+      name: disputeId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 争议工单 ID，对应 feedback_ticket.id
+    promptId:
+      name: promptId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Prompt 配置 ID，对应 sys_agent_prompt.id
+    recordId:
+      name: recordId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 审核记录 ID
+    alertId:
+      name: alertId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: 行为预警 ID
+  requestBodies:
+    RegisterBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            properties:
+              email:
+                type: string
+                example: spark@example.com
+                description: 邮箱，对应 sys_user.email
+              password:
+                type: string
+                example: '12345678'
+                description: 密码，服务端加密后写入 sys_user.password_hash
+              nickname:
+                type: string
+                example: 一粒黑子
+                description: 昵称，对应 sys_user.nickname
+              role:
+                type: string
+                example: spark
+                description: 用户角色，默认 spark
+            required:
+            - email
+            - password
+            - nickname
+    LoginBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            properties:
+              account:
+                type: string
+                example: spark@example.com
+                description: 邮箱或用户名，对应 sys_user.email/sys_user.username
+              password:
+                type: string
+                example: '12345678'
+                description: 密码，服务端加密后写入 sys_user.password_hash
+              clientType:
+                type: string
+                example: web
+                enum:
+                - web
+                - desktop
+                - mobile
+                description: 客户端类型：web/desktop/mobile
+              deviceId:
+                type: string
+                example: device_001
+                description: 设备标识，对应 user_login_session.device_id
+            required:
+            - account
+            - password
+    RefreshTokenBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            properties:
+              refreshToken:
+                type: string
+                description: 刷新令牌，对应 user_login_session.refresh_token
+            required:
+            - refreshToken
+    EmailBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            properties:
+              email:
+                type: string
+                description: 邮箱，对应 sys_user.email
+                format: email
+                example: spark@example.com
+            required:
+            - email
+    PasswordResetBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            properties:
+              token:
+                type: string
+                description: 重置或校验凭证
+              password:
+                type: string
+                description: 密码，服务端加密后写入 sys_user.password_hash
+                example: '12345678'
+            required:
+            - token
+            - password
+    ChatMessageBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            properties:
+              content:
+                type: string
+                description: 正文内容
+                example: 这里是正文内容
+              contentType:
+                type: string
+                example: text
+                enum:
+                - text
+                - image
+                - file
+                - mixed
+                description: 内容类型
+              attachments:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+                description: 附件列表，对应 sys_oss_file
+              stream:
+                type: boolean
+                example: true
+                description: 是否使用流式响应
+            required:
+            - content
+    AnswerBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            properties:
+              answer:
+                oneOf:
+                - type: string
+                - type: array
+                  items:
+                    type: string
+                - type: object
+                  additionalProperties: true
+                description: 用户答案，按题型可为字符串、数组或对象
+              durationSeconds:
+                type: integer
+                description: 耗时或资源总时长，单位秒
+              flagged:
+                type: boolean
+                description: 是否标记题目
+              attachments:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+                description: 附件列表，对应 sys_oss_file
+            required:
+            - answer
+    CodeRunBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            properties:
+              language:
+                type: string
+                example: javascript
+                description: 代码语言
+              code:
+                type: string
+                description: 验证码或代码内容，按接口上下文区分
+              input:
+                type: string
+                description: 自定义输入
+              testcaseIds:
+                type: array
+                items:
+                  type: string
+                description: 测试用例 ID 列表
+            required:
+            - language
+            - code
+  responses:
+    Success:
+      description: 成功
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+    PageSuccess:
+      description: 分页成功
+      content:
+        application/json:
+          schema:
+            allOf:
+            - $ref: '#/components/schemas/ApiResponse'
+            - type: object
+              properties:
+                data:
+                  $ref: '#/components/schemas/PageResult'
+    AuthSuccess:
+      description: 登录或刷新成功
+      content:
+        application/json:
+          schema:
+            allOf:
+            - $ref: '#/components/schemas/ApiResponse'
+            - type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    accessToken:
+                      type: string
+                    refreshToken:
+                      type: string
+                    expiresIn:
+                      type: integer
+                      example: 7200
+  schemas:
+    ApiResponse:
+      type: object
+      required:
+      - code
+      - message
+      - data
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: success
+        data:
+          nullable: true
+          oneOf:
+          - type: object
+            additionalProperties: true
+          - type: array
+            items: {}
+          - type: string
+          - type: number
+          - type: boolean
+        requestId:
+          type: string
+          example: req_20260505_xxxx
+    PageResult:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        pageSize:
+          type: integer
+          example: 10
+        total:
+          type: integer
+          example: 120
+        list:
+          type: array
+          items:
+            type: object
+            additionalProperties: true

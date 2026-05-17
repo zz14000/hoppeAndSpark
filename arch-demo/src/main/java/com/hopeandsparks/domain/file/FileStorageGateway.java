@@ -1,0 +1,11 @@
+package com.hopeandsparks.domain.file;
+
+
+/**
+ * 文件职责：FileStorageGateway 是 Hope and Sparks 后端骨架中的源码文件，位于 src\main\java\com\hopeandsparks\domain\file\FileStorageGateway.java，用于承载对应分层或接口的基础职责。
+ */
+public interface FileStorageGateway {
+
+    StoredFile store(StoreFileCommand command);
+}
+

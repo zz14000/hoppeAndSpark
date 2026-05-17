@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: hope-and-sparks
+  profiles:
+    default: mock
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+hope:
+  adapter-mode: mock
+  agent:
+    mode: mock
+    coze-base-url: https://api.coze.cn
+    coze-token: ${COZE_API_TOKEN:}
+  llm:
+    mode: mock
+  queue:
+    mode: mock
+  file:
+    mode: mock
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    access-key: ${MINIO_ACCESS_KEY:}
+    secret-key: ${MINIO_SECRET_KEY:}
+    bucket: ${MINIO_BUCKET:hope-sparks}
+  vector:
+    mode: mock
+    chroma-base-url: ${CHROMA_BASE_URL:http://localhost:8000}

@@ -1,0 +1,18 @@
+package com.hopeandsparks.domain.agent;
+
+
+/**
+ * 文件职责：AgentMessageResult 是 Hope and Sparks 后端骨架中的源码文件，位于 src\main\java\com\hopeandsparks\domain\agent\AgentMessageResult.java，用于承载对应分层或接口的基础职责。
+ */
+import java.util.Map;
+
+public record AgentMessageResult(
+    String sessionId,
+    String agentCode,
+    String role,
+    String content,
+    String externalMessageId,
+    Map<String, Object> metadata
+) {
+}
+
