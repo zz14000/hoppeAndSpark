@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: hope-and-sparks
+
+server:
+  port: 8080

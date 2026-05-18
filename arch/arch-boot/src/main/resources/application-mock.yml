@@ -1,0 +1,7 @@
+spring:
+  config:
+    activate:
+      on-profile: mock
+
+hope:
+  adapter-mode: mock
