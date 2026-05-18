@@ -16,7 +16,7 @@
  Discussion Revision: 2026/05/17
  1. Added sys_agent_config for Coze Bot / Workflow routing.
  2. Added Coze external mapping fields to agent_chat_session and agent_chat_message.
- 3. Extended async_generation_task for RabbitMQ/Coze workflow task tracking.
+ 3. Extended async_generation_task for Redis Stream/Coze workflow task tracking.
  4. Extended blog_post/blog_comment moderation status for MVP community review.
  5. Kept code question MVP on question_bank + user_question_record with AI judging fields.
 */

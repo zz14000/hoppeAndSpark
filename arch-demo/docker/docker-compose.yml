@@ -24,18 +24,6 @@ services:
     volumes:
       - hope_redis_data:/data
 
-  rabbitmq:
-    image: rabbitmq:3.13-management
-    container_name: hope-rabbitmq
-    environment:
-      RABBITMQ_DEFAULT_USER: hope
-      RABBITMQ_DEFAULT_PASS: hope123456
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    volumes:
-      - hope_rabbitmq_data:/var/lib/rabbitmq
-
   minio:
     image: minio/minio:RELEASE.2024-10-13T13-34-11Z
     container_name: hope-minio
@@ -60,6 +48,5 @@ services:
 volumes:
   hope_mysql_data:
   hope_redis_data:
-  hope_rabbitmq_data:
   hope_minio_data:
   hope_chroma_data:
