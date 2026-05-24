@@ -789,20 +789,6 @@ CREATE TABLE `sys_admin`  (
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '管理员表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
--- Table structure for sys_admin_role
--- ----------------------------
-DROP TABLE IF EXISTS `sys_admin_role`;
-CREATE TABLE `sys_admin_role`  (
-  `admin_id` bigint NOT NULL,
-  `role_id` bigint NOT NULL,
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`admin_id`, `role_id`) USING BTREE,
-  INDEX `fk_admin_role_role`(`role_id` ASC) USING BTREE,
-  CONSTRAINT `fk_admin_role_admin` FOREIGN KEY (`admin_id`) REFERENCES `sys_admin` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `fk_admin_role_role` FOREIGN KEY (`role_id`) REFERENCES `sys_role` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '管理员角色关联表' ROW_FORMAT = Dynamic;
-
--- ----------------------------
 -- Table structure for sys_agent_prompt
 -- ----------------------------
 DROP TABLE IF EXISTS `sys_agent_prompt`;
@@ -926,18 +912,117 @@ CREATE TABLE `sys_oss_file`  (
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '文件资产表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
--- Table structure for sys_permission
+-- Table structure for sys_admin_resource_category
 -- ----------------------------
-DROP TABLE IF EXISTS `sys_permission`;
-CREATE TABLE `sys_permission`  (
+DROP TABLE IF EXISTS `sys_admin_resource_category`;
+CREATE TABLE `sys_admin_resource_category`  (
   `id` bigint NOT NULL AUTO_INCREMENT,
-  `permission_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '权限名称',
-  `permission_key` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '权限标识',
-  `module_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '模块名',
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '资源分类名称',
+  `sort_order` int NOT NULL DEFAULT 0 COMMENT '排序值',
+  `status` tinyint NOT NULL DEFAULT 1 COMMENT '1启用 0停用',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `is_deleted` tinyint NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE INDEX `uk_permission_key`(`permission_key` ASC) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '权限表' ROW_FORMAT = Dynamic;
+  UNIQUE INDEX `uk_admin_resource_category_name`(`name` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '后台资源分类表' ROW_FORMAT = Dynamic;
+
+INSERT INTO `sys_admin_resource_category`
+(`id`, `name`, `sort_order`, `status`)
+VALUES
+(1, '认证与会话', 10, 1),
+(2, '数据看板', 20, 1),
+(3, '用户治理', 30, 1),
+(4, '知识库管理', 40, 1),
+(5, '争议工单', 50, 1),
+(6, '存储与资源治理', 60, 1),
+(7, 'Agent 配置', 70, 1),
+(8, 'AI 审核与风控', 80, 1),
+(9, 'RBAC 与系统审计', 90, 1);
+
+-- ----------------------------
+-- Table structure for sys_admin_menu
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_admin_menu`;
+CREATE TABLE `sys_admin_menu`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `parent_id` bigint NOT NULL DEFAULT 0 COMMENT '父目录ID，0表示根目录',
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '目录名称',
+  `path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '前端路由或目录路径',
+  `leval` int NOT NULL DEFAULT 1 COMMENT '树层级',
+  `sort_order` int NOT NULL DEFAULT 0 COMMENT '排序值',
+  `status` tinyint NOT NULL DEFAULT 1 COMMENT '1启用 0停用',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `is_deleted` tinyint NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_parent_sort`(`parent_id` ASC, `sort_order` ASC) USING BTREE,
+  INDEX `idx_status`(`status` ASC) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '后台目录表' ROW_FORMAT = Dynamic;
+
+INSERT INTO `sys_admin_menu`
+(`id`, `parent_id`, `name`, `path`, `leval`, `sort_order`, `status`)
+VALUES
+(1, 0, '数据看板', '/manage/dashboard', 1, 10, 1),
+(2, 0, '用户治理', '/manage/users', 1, 20, 1),
+(3, 0, '知识库管理', '/manage/knowledge-base', 1, 30, 1),
+(4, 0, '争议工单', '/manage/ai-disputes', 1, 40, 1),
+(5, 0, '资源治理', '/manage/resources', 1, 50, 1),
+(6, 0, 'Agent 配置', '/manage/agent-prompts', 1, 60, 1),
+(7, 0, 'AI 审核与风控', '/manage/moderation', 1, 70, 1),
+(8, 0, '系统权限', '/manage/system', 1, 90, 1),
+(9, 2, '用户列表', '/manage/users/list', 2, 10, 1),
+(10, 3, '文档列表', '/manage/knowledge-base/documents', 2, 10, 1),
+(11, 4, '工单列表', '/manage/ai-disputes/list', 2, 10, 1),
+(12, 5, '存储监控', '/manage/storage/overview', 2, 10, 1),
+(13, 5, '历史资源', '/manage/resources/history', 2, 20, 1),
+(14, 6, 'Prompt 配置', '/manage/agent-prompts/list', 2, 10, 1),
+(15, 7, '内容审核列表', '/manage/moderation/content', 2, 10, 1),
+(16, 7, '行为预警列表', '/manage/moderation/behavior-alerts', 2, 20, 1),
+(17, 8, '角色管理', '/manage/system/roles', 2, 10, 1),
+(18, 8, '管理员管理', '/manage/system/admins', 2, 20, 1),
+(19, 8, '操作日志', '/manage/system/operation-logs', 2, 30, 1);
+
+-- ----------------------------
+-- Table structure for sys_admin_resource
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_admin_resource`;
+CREATE TABLE `sys_admin_resource`  (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `category_id` bigint NOT NULL COMMENT '后台资源分类ID',
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '资源名称',
+  `code` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '资源标识',
+  `url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'Controller基础路径，取类上@RequestMapping的值',
+  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '资源说明',
+  `sort_order` int NOT NULL DEFAULT 0 COMMENT '排序值',
+  `status` tinyint NOT NULL DEFAULT 1 COMMENT '1启用 0停用',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `is_deleted` tinyint NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_admin_resource_code`(`code` ASC) USING BTREE,
+  UNIQUE INDEX `uk_admin_resource_url`(`url` ASC) USING BTREE,
+  INDEX `idx_admin_resource_category`(`category_id` ASC) USING BTREE,
+  INDEX `idx_admin_resource_status`(`status` ASC) USING BTREE,
+  CONSTRAINT `fk_admin_resource_category` FOREIGN KEY (`category_id`) REFERENCES `sys_admin_resource_category` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '后台Controller资源表' ROW_FORMAT = Dynamic;
+
+INSERT INTO `sys_admin_resource`
+(`id`, `category_id`, `name`, `code`, `url`, `description`, `sort_order`, `status`)
+VALUES
+(1, 2, '数据看板资源', 'manage:dashboard', '/api/v1/manage/dashboard', '后台数据看板统计', 10, 1),
+(2, 3, '用户列表资源', 'manage:user:list', '/api/v1/manage/users', '用户列表、用户状态治理、学习轨迹查看', 20, 1),
+(3, 4, '知识库文档列表资源', 'manage:kb:document', '/api/v1/manage/knowledge-base/documents', '知识库文档列表、上传、编辑、删除、解析状态', 30, 1),
+(4, 5, '工单列表资源', 'manage:dispute:list', '/api/v1/manage/ai-disputes', 'AI争议工单列表、复核、处理', 40, 1),
+(5, 6, '存储监控资源', 'manage:storage:overview', '/api/v1/manage/storage', '存储容量、资源统计、冗余资源监控', 50, 1),
+(6, 6, '历史资源列表资源', 'manage:resource:history', '/api/v1/manage/resources', '历史生成资源列表、详情、删除', 60, 1),
+(7, 7, 'Prompt 配置资源', 'manage:agent_prompt', '/api/v1/manage/agent-prompts', 'Agent Prompt 列表、编辑、启停', 70, 1),
+(8, 8, '内容审核列表资源', 'manage:moderation:content', '/api/v1/manage/moderation/content', '内容审核列表、通过、阻断、下架', 80, 1),
+(9, 8, '行为预警列表资源', 'manage:moderation:behavior_alert', '/api/v1/manage/moderation/behavior-alerts', '行为预警列表、标记、处置、备注', 90, 1),
+(10, 9, '菜单管理资源', 'manage:system:menu', '/api/v1/manage/menus', '后台菜单树查询与后续菜单维护', 100, 1),
+(11, 9, '角色管理资源', 'manage:system:role', '/api/v1/manage/roles', '角色列表、创建角色、编辑角色、分配菜单与资源', 110, 1),
+(12, 9, '管理员管理资源', 'manage:system:admin', '/api/v1/manage/admins', '管理员列表、创建管理员、分配角色、禁用管理员', 120, 1),
+(13, 9, '操作日志资源', 'manage:system:operation_log', '/api/v1/manage/operation-logs', '后台操作日志查询；日志写入不依赖该权限', 130, 1);
 
 -- ----------------------------
 -- Table structure for sys_role
@@ -955,18 +1040,46 @@ CREATE TABLE `sys_role`  (
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
--- Table structure for sys_role_permission
+-- Table structure for sys_admin_role
 -- ----------------------------
-DROP TABLE IF EXISTS `sys_role_permission`;
-CREATE TABLE `sys_role_permission`  (
+DROP TABLE IF EXISTS `sys_admin_role`;
+CREATE TABLE `sys_admin_role`  (
+  `admin_id` bigint NOT NULL,
   `role_id` bigint NOT NULL,
-  `permission_id` bigint NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`role_id`, `permission_id`) USING BTREE,
-  INDEX `fk_role_perm_permission`(`permission_id` ASC) USING BTREE,
-  CONSTRAINT `fk_role_perm_permission` FOREIGN KEY (`permission_id`) REFERENCES `sys_permission` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `fk_role_perm_role` FOREIGN KEY (`role_id`) REFERENCES `sys_role` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色权限关联表' ROW_FORMAT = Dynamic;
+  PRIMARY KEY (`admin_id`, `role_id`) USING BTREE,
+  INDEX `fk_admin_role_role`(`role_id` ASC) USING BTREE,
+  CONSTRAINT `fk_admin_role_admin` FOREIGN KEY (`admin_id`) REFERENCES `sys_admin` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fk_admin_role_role` FOREIGN KEY (`role_id`) REFERENCES `sys_role` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '管理员角色关联表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for sys_role_admin_menu
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_role_admin_menu`;
+CREATE TABLE `sys_role_admin_menu`  (
+  `role_id` bigint NOT NULL,
+  `menu_id` bigint NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`role_id`, `menu_id`) USING BTREE,
+  INDEX `fk_role_admin_menu_menu`(`menu_id` ASC) USING BTREE,
+  CONSTRAINT `fk_role_admin_menu_menu` FOREIGN KEY (`menu_id`) REFERENCES `sys_admin_menu` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fk_role_admin_menu_role` FOREIGN KEY (`role_id`) REFERENCES `sys_role` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色目录关联表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for sys_role_admin_resource
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_role_admin_resource`;
+CREATE TABLE `sys_role_admin_resource`  (
+  `role_id` bigint NOT NULL,
+  `resource_id` bigint NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`role_id`, `resource_id`) USING BTREE,
+  INDEX `fk_role_admin_resource_resource`(`resource_id` ASC) USING BTREE,
+  CONSTRAINT `fk_role_admin_resource_resource` FOREIGN KEY (`resource_id`) REFERENCES `sys_admin_resource` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fk_role_admin_resource_role` FOREIGN KEY (`role_id`) REFERENCES `sys_role` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色后台Controller资源关联表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for sys_user

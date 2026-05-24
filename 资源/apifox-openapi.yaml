@@ -48,6 +48,10 @@ paths:
               type: object
               additionalProperties: false
               properties:
+                username:
+                  type: string
+                  example: spark_1001
+                  description: 登录账号，对应 sys_user.username
                 email:
                   type: string
                   example: spark@example.com
@@ -60,14 +64,9 @@ paths:
                   type: string
                   example: 一粒黑子
                   description: 昵称，对应 sys_user.nickname
-                role:
-                  type: string
-                  example: spark
-                  description: 用户角色，默认 spark
               required:
-              - email
+              - username
               - password
-              - nickname
       responses:
         '200':
           $ref: '#/components/responses/Success'
@@ -78,16 +77,16 @@ paths:
 
         | --- | --- | --- | --- | --- |
 
-        | Body | `email` | 是 | string | 邮箱，对应 sys_user.email |
+        | Body | `username` | 是 | string | 登录账号，对应 sys_user.username |
 
         | Body | `password` | 是 | string | 密码，服务端加密后写入 sys_user.password_hash |
 
-        | Body | `nickname` | 是 | string | 昵称，对应 sys_user.nickname |
+        | Body | `email` | 否 | string | 邮箱，对应 sys_user.email |
 
-        | Body | `role` | 否 | string | 用户角色，默认 spark |
+        | Body | `nickname` | 否 | string | 昵称，对应 sys_user.nickname |
 
 
-        主要数据表：sys_user、user_profile、user_login_session'
+        主要数据表：sys_user'
   /api/v1/auth/login:
     post:
       tags:
@@ -115,9 +114,9 @@ paths:
                   example: web
                   enum:
                   - web
-                  - desktop
-                  - mobile
-                  description: 客户端类型：web/desktop/mobile
+                  - android
+                  - ios
+                  description: 客户端类型：web/android/ios
                 deviceId:
                   type: string
                   example: device_001
@@ -139,12 +138,12 @@ paths:
 
         | Body | `password` | 是 | string | 密码，服务端加密后写入 sys_user.password_hash |
 
-        | Body | `clientType` | 否 | string | 客户端类型：web/desktop/mobile |
+        | Body | `clientType` | 否 | string | 客户端类型：web/android/ios |
 
         | Body | `deviceId` | 否 | string | 设备标识，对应 user_login_session.device_id |
 
 
-        主要数据表：sys_user、user_profile、user_login_session'
+        主要数据表：sys_user、user_login_session；登录响应中的 onboarded 可通过是否存在 user_profile 判断'
   /api/v1/auth/refresh:
     post:
       tags:
@@ -159,11 +158,11 @@ paths:
               type: object
               additionalProperties: false
               properties:
-                refreshToken:
+                sessionToken:
                   type: string
-                  description: 刷新令牌，对应 user_login_session.refresh_token
+                  description: 登录会话令牌，对应 user_login_session.session_token
               required:
-              - refreshToken
+              - sessionToken
       responses:
         '200':
           $ref: '#/components/responses/AuthSuccess'
@@ -174,10 +173,10 @@ paths:
 
         | --- | --- | --- | --- | --- |
 
-        | Body | `refreshToken` | 是 | string | 刷新令牌，对应 user_login_session.refresh_token |
+        | Body | `sessionToken` | 是 | string | 登录会话令牌，对应 user_login_session.session_token |
 
 
-        主要数据表：sys_user、user_profile、user_login_session'
+        主要数据表：sys_user、user_login_session'
   /api/v1/auth/logout:
     post:
       tags:
@@ -196,7 +195,7 @@ paths:
         | 无 | - | - | - | 无参数 |
 
 
-        主要数据表：sys_user、user_profile、user_login_session'
+        主要数据表：user_login_session'
   /api/v1/auth/password/reset-request:
     post:
       tags:
@@ -231,7 +230,7 @@ paths:
         | Body | `email` | 是 | string | 邮箱，对应 sys_user.email |
 
 
-        主要数据表：sys_user、user_profile、user_login_session'
+        主要数据表：sys_user'
   /api/v1/auth/password/reset-confirm:
     post:
       tags:
@@ -246,16 +245,16 @@ paths:
               type: object
               additionalProperties: false
               properties:
-                token:
+                resetToken:
                   type: string
                   description: 重置或校验凭证
-                password:
+                newPassword:
                   type: string
-                  description: 密码，服务端加密后写入 sys_user.password_hash
+                  description: 新密码，服务端加密后写入 sys_user.password_hash
                   example: '12345678'
               required:
-              - token
-              - password
+              - resetToken
+              - newPassword
       responses:
         '200':
           $ref: '#/components/responses/Success'
@@ -266,12 +265,12 @@ paths:
 
         | --- | --- | --- | --- | --- |
 
-        | Body | `token` | 是 | string | 重置或校验凭证 |
+        | Body | `resetToken` | 是 | string | 重置或校验凭证 |
 
-        | Body | `password` | 是 | string | 密码，服务端加密后写入 sys_user.password_hash |
+        | Body | `newPassword` | 是 | string | 新密码，服务端加密后写入 sys_user.password_hash |
 
 
-        主要数据表：sys_user、user_profile、user_login_session'
+        主要数据表：sys_user'
   /api/v1/onboarding/questions:
     get:
       tags:
@@ -3416,13 +3415,13 @@ paths:
 
 
         主要数据表：user_login_session、sys_user'
-  /api/v1/user/devices/{deviceId}:
+  /api/v1/user/devices/{sessionId}:
     delete:
       tags:
       - 设备与安全
       summary: 下线指定设备
       parameters:
-      - $ref: '#/components/parameters/deviceId'
+      - $ref: '#/components/parameters/loginSessionId'
       responses:
         '200':
           $ref: '#/components/responses/Success'
@@ -3433,7 +3432,7 @@ paths:
 
         | --- | --- | --- | --- | --- |
 
-        | Path | `deviceId` | 是 | string | 登录设备/会话 ID，对应 user_login_session.id |
+        | Path | `sessionId` | 是 | string | 登录会话 ID，对应 user_login_session.id |
 
 
         主要数据表：user_login_session、sys_user'
@@ -3659,11 +3658,11 @@ paths:
               properties:
                 account:
                   type: string
-                  description: 邮箱或用户名，对应 sys_user.email/sys_user.username
-                  example: spark@example.com
+                  description: 管理员用户名，对应 sys_admin.username
+                  example: admin
                 password:
                   type: string
-                  description: 密码，服务端加密后写入 sys_user.password_hash
+                  description: 密码，服务端加密后写入 sys_admin.password_hash
                   example: '12345678'
                 captcha:
                   type: string
@@ -3681,14 +3680,14 @@ paths:
 
         | --- | --- | --- | --- | --- |
 
-        | Body | `account` | 是 | string | 邮箱或用户名，对应 sys_user.email/sys_user.username |
+        | Body | `account` | 是 | string | 管理员用户名，对应 sys_admin.username |
 
-        | Body | `password` | 是 | string | 密码，服务端加密后写入 sys_user.password_hash |
+        | Body | `password` | 是 | string | 密码，服务端加密后写入 sys_admin.password_hash |
 
         | Body | `captcha` | 否 | string | 验证码 |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
   /api/v1/manage/dashboard/overview:
     get:
       tags:
@@ -3712,7 +3711,7 @@ paths:
         | Query | `endDate` | 否 | string | 结束日期 |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
   /api/v1/manage/users:
     get:
       tags:
@@ -3742,7 +3741,7 @@ paths:
         | Query | `pageSize` | 否 | integer | 每页数量 |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
   /api/v1/manage/users/{userId}/actions:
     post:
       tags:
@@ -3794,7 +3793,7 @@ paths:
         | Body | `durationDays` | 否 | integer | 处理持续天数 |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
   /api/v1/manage/users/{userId}/learning-trace:
     get:
       tags:
@@ -3815,7 +3814,7 @@ paths:
         | Path | `userId` | 是 | string | 用户 ID，对应 sys_user.id |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
   /api/v1/manage/knowledge-base/documents:
     get:
       tags:
@@ -3842,7 +3841,7 @@ paths:
         | Query | `pageSize` | 否 | integer | 每页数量 |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
     post:
       tags:
       - Manage管理端
@@ -3918,7 +3917,7 @@ paths:
         | Body | `tags` | 否 | array<string> | 标签列表 |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
   /api/v1/manage/knowledge-base/documents/{documentId}:
     put:
       tags:
@@ -3978,7 +3977,7 @@ paths:
         | Body | `tags` | 否 | array<string> | 标签列表 |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
     delete:
       tags:
       - Manage管理端
@@ -3998,7 +3997,7 @@ paths:
         | Path | `documentId` | 是 | string | 文档 ID，对应 learning_resource.id 或 kb_document.id |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
   /api/v1/manage/knowledge-base/documents/{documentId}/parse-status:
     get:
       tags:
@@ -4019,7 +4018,7 @@ paths:
         | Path | `documentId` | 是 | string | 文档 ID，对应 learning_resource.id 或 kb_document.id |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
   /api/v1/manage/ai-disputes:
     get:
       tags:
@@ -4046,7 +4045,7 @@ paths:
         | Query | `pageSize` | 否 | integer | 每页数量 |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
   /api/v1/manage/ai-disputes/{disputeId}:
     put:
       tags:
@@ -4096,7 +4095,7 @@ paths:
         | Body | `remark` | 否 | string | 备注 |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
   /api/v1/manage/storage/overview:
     get:
       tags:
@@ -4115,7 +4114,7 @@ paths:
         | 无 | - | - | - | 无参数 |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
   /api/v1/manage/resources:
     get:
       tags:
@@ -4148,7 +4147,7 @@ paths:
         | Query | `pageSize` | 否 | integer | 每页数量 |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
   /api/v1/manage/resources/{resourceId}:
     delete:
       tags:
@@ -4169,7 +4168,7 @@ paths:
         | Path | `resourceId` | 是 | string | 学习资源 ID，对应 learning_resource.id |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
   /api/v1/manage/agent-prompts:
     get:
       tags:
@@ -4188,7 +4187,7 @@ paths:
         | 无 | - | - | - | 无参数 |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
   /api/v1/manage/agent-prompts/{promptId}:
     put:
       tags:
@@ -4242,7 +4241,7 @@ paths:
         | Body | `version` | 否 | string | 版本号 |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
   /api/v1/manage/moderation/content:
     get:
       tags:
@@ -4269,7 +4268,7 @@ paths:
         | Query | `pageSize` | 否 | integer | 每页数量 |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
   /api/v1/manage/moderation/content/{recordId}:
     put:
       tags:
@@ -4326,7 +4325,7 @@ paths:
         | Body | `action` | 是 | string | 动作类型 |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
   /api/v1/manage/moderation/behavior-alerts:
     get:
       tags:
@@ -4356,7 +4355,7 @@ paths:
         | Query | `pageSize` | 否 | integer | 每页数量 |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
   /api/v1/manage/moderation/behavior-alerts/{alertId}:
     put:
       tags:
@@ -4411,7 +4410,7 @@ paths:
         | Body | `action` | 否 | string | 动作类型 |
 
 
-        主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
+        主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt'
 components:
   securitySchemes:
     bearerAuth:
@@ -4620,13 +4619,13 @@ components:
       schema:
         type: string
       description: 通知 ID
-    deviceId:
-      name: deviceId
+    loginSessionId:
+      name: sessionId
       in: path
       required: true
       schema:
         type: string
-      description: 登录设备/会话 ID，对应 user_login_session.id
+      description: 登录会话 ID，对应 user_login_session.id
     disputeId:
       name: disputeId
       in: path
@@ -4664,6 +4663,10 @@ components:
             type: object
             additionalProperties: false
             properties:
+              username:
+                type: string
+                example: spark_1001
+                description: 登录账号，对应 sys_user.username
               email:
                 type: string
                 example: spark@example.com
@@ -4676,14 +4679,9 @@ components:
                 type: string
                 example: 一粒黑子
                 description: 昵称，对应 sys_user.nickname
-              role:
-                type: string
-                example: spark
-                description: 用户角色，默认 spark
             required:
-            - email
+            - username
             - password
-            - nickname
     LoginBody:
       required: true
       content:
@@ -4705,9 +4703,9 @@ components:
                 example: web
                 enum:
                 - web
-                - desktop
-                - mobile
-                description: 客户端类型：web/desktop/mobile
+                - android
+                - ios
+                description: 客户端类型：web/android/ios
               deviceId:
                 type: string
                 example: device_001
@@ -4715,7 +4713,7 @@ components:
             required:
             - account
             - password
-    RefreshTokenBody:
+    SessionTokenBody:
       required: true
       content:
         application/json:
@@ -4723,11 +4721,11 @@ components:
             type: object
             additionalProperties: false
             properties:
-              refreshToken:
+              sessionToken:
                 type: string
-                description: 刷新令牌，对应 user_login_session.refresh_token
+                description: 登录会话令牌，对应 user_login_session.session_token
             required:
-            - refreshToken
+            - sessionToken
     EmailBody:
       required: true
       content:
@@ -4751,16 +4749,16 @@ components:
             type: object
             additionalProperties: false
             properties:
-              token:
+              resetToken:
                 type: string
                 description: 重置或校验凭证
-              password:
+              newPassword:
                 type: string
-                description: 密码，服务端加密后写入 sys_user.password_hash
+                description: 新密码，服务端加密后写入 sys_user.password_hash
                 example: '12345678'
             required:
-            - token
-            - password
+            - resetToken
+            - newPassword
     ChatMessageBody:
       required: true
       content:
@@ -4883,7 +4881,7 @@ components:
                   properties:
                     accessToken:
                       type: string
-                    refreshToken:
+                    sessionToken:
                       type: string
                     expiresIn:
                       type: integer

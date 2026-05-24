@@ -31,7 +31,7 @@ The project uses:
 - Chroma;
 - Coze for agents;
 - SSE for streaming agent responses;
-- JWT access token + refresh token for authentication.
+- JWT access token + `user_login_session.session_token` session token for authentication.
 
 MVP external dependencies should have mock adapters where possible so core flows can run without real Coze, MinIO, Redis Stream, or Chroma credentials.
 
@@ -90,6 +90,7 @@ Use API/database naming separation:
 - API fields: camelCase;
 - Java fields: camelCase;
 - database columns: snake_case;
+- when API docs, DTO/VO, and SQL schema disagree, `资源/hope_sparks.sql` wins;
 - frontend-facing IDs: string values in VO responses.
 
 ## 5. Implementation Priorities
@@ -161,7 +162,7 @@ Redis Stream low-level publishing/consuming stays in `arch-infra`.
 Own frontend user identity and settings:
 
 - registration/login/logout;
-- refresh token;
+- session token refresh;
 - current user;
 - user profile basics;
 - device security;
@@ -233,8 +234,8 @@ Own backend management entrypoints and RBAC:
 
 - `/api/v1/manage/**`;
 - admin login;
-- roles and permissions;
-- menu/button/API permission codes;
+- roles, menus, Controller resources, and resource categories;
+- menu permissions and Controller resource checks;
 - operation logs;
 - read-only dashboards.
 
@@ -305,7 +306,7 @@ Security split:
 
 - frontend user token resolves to `sys_user`;
 - backend admin token resolves to `sys_admin`;
-- backend permissions use `sys_admin`, `sys_role`, `sys_permission`;
+- backend permissions use `sys_admin`, `sys_role`, `sys_admin_menu`, `sys_admin_resource`, and `sys_admin_resource_category`;
 - high-risk backend write operations must write `sys_operation_log`.
 
 ## 10. Database And Migration Rules

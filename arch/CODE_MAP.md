@@ -119,7 +119,7 @@ Layer intent:
 | `arch-practice` | `com.hopeandsparks.practice` | practice list, answer submission, code-question AI review, Coach report | `question_bank`, `practice_set`, `user_question_record`, `evaluation_report` |
 | `arch-kb` | `com.hopeandsparks.kb` | knowledge-base document upload, parse, chunk, embed, retrieve, cite, reparse | `kb_document`, `kb_chunk_record`, `kb_parse_strategy` |
 | `arch-community` | `com.hopeandsparks.community` | articles, comments, likes, favorites, async moderation | `blog_post`, `blog_comment`, `blog_like`, `blog_favorite` |
-| `arch-manage` | `com.hopeandsparks.manage` | management backend aggregation, admin accounts, RBAC, operation logs, read-only dashboards | `sys_admin`, `sys_role`, `sys_permission`, `sys_admin_role`, `sys_role_permission`, `sys_operation_log` |
+| `arch-manage` | `com.hopeandsparks.manage` | management backend aggregation, admin accounts, RBAC, operation logs, read-only dashboards | `sys_admin`, `sys_role`, `sys_admin_menu`, `sys_admin_resource`, `sys_admin_resource_category`, `sys_admin_role`, `sys_role_admin_menu`, `sys_role_admin_resource`, `sys_operation_log` |
 
 ## 5. Postponed Or Secondary Modules
 
@@ -212,8 +212,8 @@ It owns:
 
 - `/api/v1/manage/**` backend entrypoints;
 - admin accounts;
-- role/permission relationships;
-- menu/button/API permission checks;
+- admin/role/menu/resource relationships;
+- menu permissions and Controller resource checks;
 - operation logs;
 - read-only dashboard and statistics queries.
 
@@ -250,6 +250,7 @@ It should call the owning business module for state changes:
 - Paging uses `page`, `pageSize`, `total`, `list`.
 - API fields use camelCase.
 - Database fields use snake_case.
+- If API docs, DTO/VO, and SQL schema disagree, `资源/hope_sparks.sql` wins.
 - IDs returned to the frontend should be strings.
 - DTO/VO must isolate frontend contracts from database entities.
 
@@ -280,7 +281,7 @@ Confirmed additions or semantic expansions from `arch.md`:
 - `agent_chat_session`: should map local session to external Coze conversation/thread IDs.
 - `agent_chat_message`: should map local message to external message ID and optionally raw response summary.
 - `async_generation_task`: should support `task_type`, `external_run_id`, retry fields, start/end timestamps.
-- backend RBAC tables: `sys_admin`, `sys_role`, `sys_permission`, relation tables, `sys_operation_log`.
+- backend RBAC tables: `sys_admin`, `sys_role`, `sys_admin_menu`, `sys_admin_resource`, `sys_admin_resource_category`, relation tables, `sys_operation_log`.
 - `blog_post.post_status`: expand to draft/published/pending/risk/blocked/offline semantics.
 - `blog_comment.comment_status`: add similar moderation status.
 - code question MVP: store code text and use AI review; no real sandbox in MVP.
@@ -294,7 +295,7 @@ The first high-value paths:
 3. Nebula exploration, resource list/detail, resource generation progress;
 4. study plan, knowledge topology, knowledge-resource network;
 5. practice submission, evaluation report, weak-point feedback;
-6. Manage admin login, menu permissions, button/API permissions, operation log;
+6. Manage admin login, menu permissions, Controller resource permissions, operation log;
 7. Manage knowledge-base document upload, parse status, dispute workflow;
 8. community article list/detail/publish/comment/like/favorite;
 9. community article/comment async moderation.

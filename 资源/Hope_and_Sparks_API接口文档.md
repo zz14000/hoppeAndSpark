@@ -18,7 +18,7 @@
 | --- | --- | --- |
 | `Authorization: Bearer <token>` | 是，登录后接口必填 | 用户登录凭证 |
 | `Content-Type: application/json` | 是 | JSON 请求体 |
-| `X-Client-Type` | 否 | 客户端类型：`web`、`desktop`、`mobile` |
+| `X-Client-Type` | 否 | 客户端类型：`web`、`android`、`ios` |
 | `X-Request-Id` | 否 | 请求链路追踪 ID |
 
 ### 2.2 统一响应结构
@@ -59,7 +59,7 @@
 
 ### 2.5 数据库落库与字段命名约定
 
-本接口文档已结合根目录 `数据库设计-正式版.md` 与 `hope_sparks.sql` 对齐。接口层统一使用前端友好的 camelCase 字段名，数据库层使用 snake_case 字段名；响应中默认不暴露 `is_deleted`、内部审核字段、向量库内部 ID、密码散列、管理员操作来源等敏感或实现细节字段。
+本接口文档已结合根目录 `数据库设计-正式版.md` 与 `hope_sparks.sql` 对齐。接口层统一使用前端友好的 camelCase 字段名，数据库层使用 snake_case 字段名；若接口字段说明与 SQL 表结构冲突，以 `hope_sparks.sql` 为准。响应中默认不暴露 `is_deleted`、内部审核字段、向量库内部 ID、密码散列、管理员操作来源等敏感或实现细节字段。
 
 | 约定项 | API 层 | 数据库层 |
 | --- | --- | --- |
@@ -83,7 +83,7 @@
 | 知识库/RAG | `kb_document`、`kb_chunk_record`、`kb_parse_strategy`、`sys_oss_file`，以及 Chroma 集合 | 文档解析、切片、召回、引用与向量存储 |
 | 社区与文章 | `blog_post`、`blog_comment`、`blog_like`、`blog_favorite`、`blog_view_log` | 文章、评论、点赞、收藏、浏览记录 |
 | 消息/私信/群聊 | `im_conversation`、`im_message`、`im_message_read`、`user_friend`、`sys_chat_group`、`sys_group_member` | 会话、消息、已读、好友、群组成员 |
-| 管理端/权限/工单 | `sys_admin`、`sys_role`、`sys_permission`、`sys_admin_role`、`sys_role_permission`、`feedback_ticket`、`sys_operation_log` | 管理员、角色权限、争议工单、操作日志 |
+| 管理端/权限/工单 | `sys_admin`、`sys_role`、`sys_admin_menu`、`sys_admin_resource`、`sys_admin_resource_category`、`sys_admin_role`、`sys_role_admin_menu`、`sys_role_admin_resource`、`feedback_ticket`、`sys_operation_log` | 管理员、角色权限、争议工单、操作日志 |
 | 成就/商城/挑战 | `sys_achievement_badge`、`user_achievement`、`mall_item`、`user_asset`、`weekly_challenge`、`challenge_submission` | 徽章、资产、商城物品、周挑战与提交记录 |
 
 常用字段映射：
@@ -92,7 +92,10 @@
 | --- | --- | --- |
 | `userId` | `sys_user.id` | 当前登录用户或目标用户 |
 | `username` / `account` | `sys_user.username` | 账号名 |
+| `adminId` | `sys_admin.id` | 管理端管理员 |
+| `adminAccount` | `sys_admin.username` | 管理端登录账号 |
 | `nickname` | `sys_user.nickname` | 昵称 |
+| `sessionToken` | `user_login_session.session_token` | 登录会话令牌标识，用于刷新 access token 或下线会话 |
 | `avatar` | `sys_user.avatar_url` | 头像地址 |
 | `profile.learningDomain` | `user_profile.major_domain` | 画像中的学习方向 |
 | `profile.stage` | `user_profile.grade_level` | 学段/年级 |
@@ -121,22 +124,22 @@
 
 | 位置 | 参数名 | 必填 | 类型 | 说明 |
 | --- | --- | --- | --- | --- |
-| Body | `email` | 是 | string | 邮箱，对应 sys_user.email |
+| Body | `username` | 是 | string | 登录账号，对应 sys_user.username |
 | Body | `password` | 是 | string | 密码，服务端加密后写入 sys_user.password_hash |
-| Body | `nickname` | 是 | string | 昵称，对应 sys_user.nickname |
-| Body | `role` | 否 | string | 用户角色，默认 spark |
+| Body | `email` | 否 | string | 邮箱，对应 sys_user.email |
+| Body | `nickname` | 否 | string | 昵称，对应 sys_user.nickname |
 
-主要数据表：sys_user、user_profile、user_login_session
+主要数据表：sys_user
 
 
 请求体：
 
 ```json
 {
+  "username": "spark_1001",
   "email": "spark@example.com",
   "password": "12345678",
-  "nickname": "一粒黑子",
-  "role": "spark"
+  "nickname": "一粒黑子"
 }
 ```
 
@@ -162,10 +165,10 @@
 | --- | --- | --- | --- | --- |
 | Body | `account` | 是 | string | 邮箱或用户名，对应 sys_user.email/sys_user.username |
 | Body | `password` | 是 | string | 密码，服务端加密后写入 sys_user.password_hash |
-| Body | `clientType` | 否 | string | 客户端类型：web/desktop/mobile |
+| Body | `clientType` | 否 | string | 客户端类型：web/android/ios |
 | Body | `deviceId` | 否 | string | 设备标识，对应 user_login_session.device_id |
 
-主要数据表：sys_user、user_profile、user_login_session
+主要数据表：sys_user、user_login_session；登录响应中的 onboarded 可通过是否存在 user_profile 判断
 
 
 请求体：
@@ -185,13 +188,12 @@
   "message": "success",
   "data": {
     "accessToken": "jwt_access_token",
-    "refreshToken": "jwt_refresh_token",
+    "sessionToken": "session_token",
     "expiresIn": 7200,
     "user": {
       "id": "u_1001",
       "nickname": "一粒黑子",
       "avatar": "https://cdn.example.com/avatar.png",
-      "role": "spark",
       "onboarded": true
     }
   }
@@ -206,16 +208,16 @@
 
 | 位置 | 参数名 | 必填 | 类型 | 说明 |
 | --- | --- | --- | --- | --- |
-| Body | `refreshToken` | 是 | string | 刷新令牌，对应 user_login_session.refresh_token |
+| Body | `sessionToken` | 是 | string | 登录会话令牌，对应 user_login_session.session_token |
 
-主要数据表：sys_user、user_profile、user_login_session
+主要数据表：sys_user、user_login_session
 
 
 请求体：
 
 ```json
 {
-  "refreshToken": "jwt_refresh_token"
+  "sessionToken": "session_token"
 }
 ```
 
@@ -229,7 +231,7 @@
 | --- | --- | --- | --- | --- |
 | 无 | - | - | - | 无参数 |
 
-主要数据表：sys_user、user_profile、user_login_session
+主要数据表：user_login_session
 
 
 ### 3.5 找回密码
@@ -242,7 +244,7 @@
 | --- | --- | --- | --- | --- |
 | Body | `email` | 是 | string | 邮箱，对应 sys_user.email |
 
-主要数据表：sys_user、user_profile、user_login_session
+主要数据表：sys_user
 
 
 请求体：
@@ -261,10 +263,10 @@
 
 | 位置 | 参数名 | 必填 | 类型 | 说明 |
 | --- | --- | --- | --- | --- |
-| Body | `token` | 是 | string | 重置或校验凭证 |
-| Body | `password` | 是 | string | 密码，服务端加密后写入 sys_user.password_hash |
+| Body | `resetToken` | 是 | string | 重置或校验凭证 |
+| Body | `newPassword` | 是 | string | 新密码，服务端加密后写入 sys_user.password_hash |
 
-主要数据表：sys_user、user_profile、user_login_session
+主要数据表：sys_user
 
 
 请求体：
@@ -2977,13 +2979,13 @@ data: {"messageId":"msg_1002"}
 
 ### 18.2 下线指定设备
 
-`DELETE /api/v1/user/devices/{deviceId}`
+`DELETE /api/v1/user/devices/{sessionId}`
 
 参数设计：
 
 | 位置 | 参数名 | 必填 | 类型 | 说明 |
 | --- | --- | --- | --- | --- |
-| Path | `deviceId` | 是 | string | 登录设备/会话 ID，对应 user_login_session.id |
+| Path | `sessionId` | 是 | string | 登录会话 ID，对应 user_login_session.id |
 
 主要数据表：user_login_session、sys_user
 
@@ -3105,11 +3107,11 @@ data: {"messageId":"msg_1002"}
 
 | 位置 | 参数名 | 必填 | 类型 | 说明 |
 | --- | --- | --- | --- | --- |
-| Body | `account` | 是 | string | 邮箱或用户名，对应 sys_user.email/sys_user.username |
-| Body | `password` | 是 | string | 密码，服务端加密后写入 sys_user.password_hash |
+| Body | `account` | 是 | string | 管理员用户名，对应 sys_admin.username |
+| Body | `password` | 是 | string | 密码，服务端加密后写入 sys_admin.password_hash |
 | Body | `captcha` | 否 | string | 验证码 |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 ### 20.2 数据看板
@@ -3123,7 +3125,7 @@ data: {"messageId":"msg_1002"}
 | Query | `startDate` | 否 | string | 开始日期 |
 | Query | `endDate` | 否 | string | 结束日期 |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 响应：
@@ -3160,7 +3162,7 @@ data: {"messageId":"msg_1002"}
 | Query | `page` | 否 | integer | 页码，从 1 开始 |
 | Query | `pageSize` | 否 | integer | 每页数量 |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 ### 20.4 用户封禁、解封与警告
@@ -3176,7 +3178,7 @@ data: {"messageId":"msg_1002"}
 | Body | `reason` | 是 | string | 操作原因 |
 | Body | `durationDays` | 否 | integer | 处理持续天数 |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 请求体：
@@ -3201,7 +3203,7 @@ data: {"messageId":"msg_1002"}
 | --- | --- | --- | --- | --- |
 | Path | `userId` | 是 | string | 用户 ID，对应 sys_user.id |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 响应：
@@ -3231,7 +3233,7 @@ data: {"messageId":"msg_1002"}
 | Query | `page` | 否 | integer | 页码，从 1 开始 |
 | Query | `pageSize` | 否 | integer | 每页数量 |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 ### 20.7 上传知识库文档
@@ -3250,7 +3252,7 @@ data: {"messageId":"msg_1002"}
 | Body | `parseStrategyId` | 否 | string | 解析策略 ID，对应 kb_parse_strategy.id |
 | Body | `tags` | 否 | array<string> | 标签列表 |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 请求体：
@@ -3279,7 +3281,7 @@ data: {"messageId":"msg_1002"}
 | Body | `status` | 否 | string | status |
 | Body | `tags` | 否 | array<string> | 标签列表 |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 ### 20.9 删除知识库文档
@@ -3292,7 +3294,7 @@ data: {"messageId":"msg_1002"}
 | --- | --- | --- | --- | --- |
 | Path | `documentId` | 是 | string | 文档 ID，对应 learning_resource.id 或 kb_document.id |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 ### 20.10 文档解析入库状态
@@ -3305,7 +3307,7 @@ data: {"messageId":"msg_1002"}
 | --- | --- | --- | --- | --- |
 | Path | `documentId` | 是 | string | 文档 ID，对应 learning_resource.id 或 kb_document.id |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 响应：
@@ -3334,7 +3336,7 @@ data: {"messageId":"msg_1002"}
 | Query | `page` | 否 | integer | 页码，从 1 开始 |
 | Query | `pageSize` | 否 | integer | 每页数量 |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 ### 20.12 处理争议内容
@@ -3350,7 +3352,7 @@ data: {"messageId":"msg_1002"}
 | Body | `result` | 否 | string | 处理结果 |
 | Body | `remark` | 否 | string | 备注 |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 请求体：
@@ -3374,7 +3376,7 @@ data: {"messageId":"msg_1002"}
 | --- | --- | --- | --- | --- |
 | 无 | - | - | - | 无参数 |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 响应：
@@ -3404,7 +3406,7 @@ data: {"messageId":"msg_1002"}
 | Query | `page` | 否 | integer | 页码，从 1 开始 |
 | Query | `pageSize` | 否 | integer | 每页数量 |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 `DELETE /api/v1/manage/resources/{resourceId}`
@@ -3415,7 +3417,7 @@ data: {"messageId":"msg_1002"}
 | --- | --- | --- | --- | --- |
 | Path | `resourceId` | 是 | string | 学习资源 ID，对应 learning_resource.id |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 ### 20.15 Prompt 配置列表
@@ -3428,7 +3430,7 @@ data: {"messageId":"msg_1002"}
 | --- | --- | --- | --- | --- |
 | 无 | - | - | - | 无参数 |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 ### 20.16 更新 Prompt 配置
@@ -3445,7 +3447,7 @@ data: {"messageId":"msg_1002"}
 | Body | `status` | 否 | string | status |
 | Body | `version` | 否 | string | 版本号 |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 请求体：
@@ -3472,7 +3474,7 @@ data: {"messageId":"msg_1002"}
 | Query | `page` | 否 | integer | 页码，从 1 开始 |
 | Query | `pageSize` | 否 | integer | 每页数量 |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 ### 20.18 处理内容审核结果
@@ -3488,7 +3490,7 @@ data: {"messageId":"msg_1002"}
 | Body | `reason` | 否 | string | 操作原因 |
 | Body | `action` | 是 | string | 动作类型 |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 请求体：
@@ -3512,7 +3514,7 @@ data: {"messageId":"msg_1002"}
 | Query | `page` | 否 | integer | 页码，从 1 开始 |
 | Query | `pageSize` | 否 | integer | 每页数量 |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 ### 20.20 处理行为预警
@@ -3528,7 +3530,7 @@ data: {"messageId":"msg_1002"}
 | Body | `remark` | 否 | string | 备注 |
 | Body | `action` | 否 | string | 动作类型 |
 
-主要数据表：sys_admin、sys_role、sys_permission、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
+主要数据表：sys_admin、sys_role、sys_admin_menu、sys_admin_resource、sys_admin_resource_category、sys_admin_role、sys_role_admin_menu、sys_role_admin_resource、feedback_ticket、kb_document、sys_operation_log、sys_agent_prompt
 
 
 请求体：
