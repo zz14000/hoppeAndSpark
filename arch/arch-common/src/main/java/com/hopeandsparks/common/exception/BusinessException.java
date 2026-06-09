@@ -1,5 +1,7 @@
 package com.hopeandsparks.common.exception;
 
+import com.hopeandsparks.common.enums.ErrorCode;
+
 /**
  * 业务异常，用于表达可预期的业务错误，例如未登录、无权限、资源不存在或状态冲突。
  *
@@ -10,6 +12,14 @@ package com.hopeandsparks.common.exception;
 public class BusinessException extends RuntimeException {
 
     private final int code;
+
+    public BusinessException(ErrorCode errorCode) {
+        this(errorCode.getCode(), errorCode.getMessage());
+    }
+
+    public BusinessException(ErrorCode errorCode, String message) {
+        this(errorCode.getCode(), message);
+    }
 
     public BusinessException(int code, String message) {
         super(message);

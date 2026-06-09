@@ -1,15 +1,22 @@
 package com.hopeandsparks.profile.controller;
 
 import com.hopeandsparks.common.response.ApiResponse;
-import com.hopeandsparks.common.response.PlaceholderData;
+import com.hopeandsparks.infra.security.AuthenticatedPrincipal;
+import com.hopeandsparks.profile.dto.OnboardingAnswerRequest;
+import com.hopeandsparks.profile.dto.OnboardingCompleteRequest;
+import com.hopeandsparks.profile.dto.SparkProfileRebuildRequest;
+import com.hopeandsparks.profile.service.ProfileService;
+import com.hopeandsparks.profile.vo.OnboardingAnswerVO;
+import com.hopeandsparks.profile.vo.OnboardingQuestionVO;
+import com.hopeandsparks.profile.vo.SparkProfileVO;
+import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
-
-import static com.hopeandsparks.common.web.WebValueUtils.values;
+import java.util.List;
 
 /**
  * Spark 画像引导接口，负责画像问题、单轮回答、画像完成和重新构建画像。
@@ -20,23 +27,42 @@ import static com.hopeandsparks.common.web.WebValueUtils.values;
 @RestController
 public class OnboardingController {
 
+    private final ProfileService profileService;
+
+    public OnboardingController(ProfileService profileService) {
+        this.profileService = profileService;
+    }
+
     @GetMapping("/api/v1/onboarding/questions")
-    public ApiResponse<Map<String, Object>> questions() {
-        return ApiResponse.ok(PlaceholderData.of("profile", "questions"));
+    public ApiResponse<List<OnboardingQuestionVO>> questions() {
+        return ApiResponse.ok(profileService.questions());
     }
 
     @PostMapping("/api/v1/onboarding/answers")
-    public ApiResponse<Map<String, Object>> answer(@RequestBody(required = false) Map<String, Object> request) {
-        return ApiResponse.ok(PlaceholderData.of("profile", "answer", values("request", request)));
+    public ApiResponse<OnboardingAnswerVO> answer(
+            Authentication authentication,
+            @Valid @RequestBody OnboardingAnswerRequest request
+    ) {
+        return ApiResponse.ok(profileService.answer(principal(authentication), request));
     }
 
     @PostMapping("/api/v1/onboarding/complete")
-    public ApiResponse<Map<String, Object>> complete(@RequestBody(required = false) Map<String, Object> request) {
-        return ApiResponse.ok(PlaceholderData.of("profile", "complete", values("request", request)));
+    public ApiResponse<SparkProfileVO> complete(
+            Authentication authentication,
+            @RequestBody(required = false) OnboardingCompleteRequest request
+    ) {
+        return ApiResponse.ok("画像生成成功", profileService.complete(principal(authentication), request));
     }
 
     @PostMapping("/api/v1/spark-profile/rebuild")
-    public ApiResponse<Map<String, Object>> rebuild(@RequestBody(required = false) Map<String, Object> request) {
-        return ApiResponse.ok(PlaceholderData.of("profile", "rebuild", values("request", request)));
+    public ApiResponse<SparkProfileVO> rebuild(
+            Authentication authentication,
+            @Valid @RequestBody SparkProfileRebuildRequest request
+    ) {
+        return ApiResponse.ok("画像重建成功", profileService.rebuild(principal(authentication), request));
+    }
+
+    private AuthenticatedPrincipal principal(Authentication authentication) {
+        return authentication == null ? null : (AuthenticatedPrincipal) authentication.getPrincipal();
     }
 }

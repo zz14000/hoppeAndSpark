@@ -7,12 +7,15 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class AuthTokenRedisStore {
 
     private final StringRedisTemplate redisTemplate;
     private final SecurityProperties securityProperties;
+    private final Map<String, String> memoryStore = new ConcurrentHashMap<>();
 
     /**
      * 注入 Redis 字符串模板和安全配置。
@@ -28,7 +31,14 @@ public class AuthTokenRedisStore {
      * 前台 token 写入 auth:user:token:{token}，后台 token 写入 auth:admin:token:{token}，并设置和 JWT 一致的 TTL。
      */
     public void save(String token, JwtSubject subject, Duration ttl) {
-        redisTemplate.opsForValue().set(keyFor(token, subject.type()), valueFor(subject), ttl);
+        String key = keyFor(token, subject.type());
+        String value = valueFor(subject);
+        memoryStore.put(key, value);
+        try {
+            redisTemplate.opsForValue().set(key, value, ttl);
+        } catch (RuntimeException exception) {
+            // 本地 W1 环境可能没启动 Redis，先保留内存登录态，保证接口能联调。
+        }
     }
 
     /**
@@ -36,8 +46,16 @@ public class AuthTokenRedisStore {
      * JWT 过滤器会用这个结果支持主动登出、强制下线和服务端 token 失效。
      */
     public boolean exists(String token, IdentityType type) {
-        Boolean result = redisTemplate.hasKey(keyFor(token, type));
-        return Boolean.TRUE.equals(result);
+        String key = keyFor(token, type);
+        if (memoryStore.containsKey(key)) {
+            return true;
+        }
+        try {
+            Boolean result = redisTemplate.hasKey(key);
+            return Boolean.TRUE.equals(result);
+        } catch (RuntimeException exception) {
+            return false;
+        }
     }
 
     /**
@@ -45,7 +63,13 @@ public class AuthTokenRedisStore {
      * 删除后即使 JWT 本身还没过期，请求过滤器也不会再接受该 token。
      */
     public void delete(String token, IdentityType type) {
-        redisTemplate.delete(keyFor(token, type));
+        String key = keyFor(token, type);
+        memoryStore.remove(key);
+        try {
+            redisTemplate.delete(key);
+        } catch (RuntimeException exception) {
+            // mock 兜底模式下 Redis 不可用也允许退出登录接口完成。
+        }
     }
 
     /**

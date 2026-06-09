@@ -1,8 +1,18 @@
 package com.hopeandsparks.agent.controller;
 
+import com.hopeandsparks.agent.dto.AgentMessageSendRequest;
+import com.hopeandsparks.agent.dto.AgentSessionCreateRequest;
+import com.hopeandsparks.agent.service.AgentSessionService;
+import com.hopeandsparks.agent.vo.AgentMessageSendVO;
+import com.hopeandsparks.agent.vo.AgentMessageVO;
+import com.hopeandsparks.agent.vo.AgentSessionVO;
+import com.hopeandsparks.agent.vo.AgentStreamEventVO;
 import com.hopeandsparks.common.response.ApiResponse;
-import com.hopeandsparks.common.response.PlaceholderData;
+import com.hopeandsparks.common.response.PageResponse;
+import com.hopeandsparks.infra.security.AuthenticatedPrincipal;
+import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,43 +25,72 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
 import java.util.Map;
 
-import static com.hopeandsparks.common.web.WebValueUtils.values;
-
 /**
- * 智能体会话接口，负责创建本地会话、查询历史消息、发送消息和 SSE 流式响应。
- *
- * <p>后续实现时，这里会调用 Agent Service 写入 {@code agent_chat_session} 和
- * {@code agent_chat_message}，再通过 infra 的 Coze 客户端完成实际 Bot / Workflow 调用。
- * SSE 接口用于对话型 Agent 的实时输出。</p>
+ * 智能体会话接口，负责本地会话、消息历史、发送消息和 SSE 输出。
  */
 @RestController
 @RequestMapping("/api/v1/agent-sessions")
 public class AgentSessionController {
 
+    private final AgentSessionService agentSessionService;
+
+    public AgentSessionController(AgentSessionService agentSessionService) {
+        this.agentSessionService = agentSessionService;
+    }
+
     @PostMapping
-    public ApiResponse<Map<String, Object>> createSession(@RequestBody(required = false) Map<String, Object> request) {
-        return ApiResponse.ok(PlaceholderData.of("agent", "createSession", values("request", request)));
+    public ApiResponse<AgentSessionVO> createSession(
+            Authentication authentication,
+            @Valid @RequestBody AgentSessionCreateRequest request
+    ) {
+        return ApiResponse.ok(agentSessionService.createSession(principal(authentication), request));
     }
 
     @GetMapping("/{sessionId}/messages")
-    public ApiResponse<Map<String, Object>> messages(@PathVariable String sessionId, @RequestParam Map<String, String> query) {
-        return ApiResponse.ok(PlaceholderData.of("agent", "messages", values("sessionId", sessionId, "query", query)));
+    public ApiResponse<PageResponse<AgentMessageVO>> messages(
+            Authentication authentication,
+            @PathVariable String sessionId,
+            @RequestParam(defaultValue = "1") long page,
+            @RequestParam(defaultValue = "30") long pageSize
+    ) {
+        return ApiResponse.ok(agentSessionService.listMessages(principal(authentication), sessionId, page, pageSize));
     }
 
     @PostMapping("/{sessionId}/messages")
-    public ApiResponse<Map<String, Object>> sendMessage(
+    public ApiResponse<AgentMessageSendVO> sendMessage(
+            Authentication authentication,
             @PathVariable String sessionId,
-            @RequestBody(required = false) Map<String, Object> request) {
-        return ApiResponse.ok(PlaceholderData.of("agent", "sendMessage", values("sessionId", sessionId, "request", request)));
+            @Valid @RequestBody AgentMessageSendRequest request
+    ) {
+        return ApiResponse.ok(agentSessionService.sendMessage(principal(authentication), sessionId, request));
     }
 
     @GetMapping(value = "/{sessionId}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter stream(@PathVariable String sessionId, @RequestParam Map<String, String> query) throws IOException {
+    public SseEmitter stream(
+            Authentication authentication,
+            @PathVariable String sessionId,
+            @RequestParam String messageId
+    ) {
         SseEmitter emitter = new SseEmitter(0L);
-        emitter.send(SseEmitter.event()
-                .name("message")
-                .data(PlaceholderData.of("agent", "stream", values("sessionId", sessionId, "query", query))));
-        emitter.complete();
+        try {
+            for (AgentStreamEventVO event : agentSessionService.streamEvents(principal(authentication), sessionId, messageId)) {
+                emitter.send(SseEmitter.event().name(event.type()).data(eventData(event)));
+            }
+            emitter.complete();
+        } catch (IOException exception) {
+            emitter.completeWithError(exception);
+        }
         return emitter;
+    }
+
+    private Map<String, Object> eventData(AgentStreamEventVO event) {
+        if ("done".equals(event.type())) {
+            return Map.of("messageId", event.messageId(), "mock", event.mock());
+        }
+        return Map.of("content", event.content(), "messageId", event.messageId(), "mock", event.mock());
+    }
+
+    private AuthenticatedPrincipal principal(Authentication authentication) {
+        return authentication == null ? null : (AuthenticatedPrincipal) authentication.getPrincipal();
     }
 }

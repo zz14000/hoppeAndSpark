@@ -1,11 +1,17 @@
 package com.hopeandsparks.infra.redis;
 
+import java.util.List;
+import java.util.Map;
+
 /**
- * Redis Stream 基础客户端接口，封装消息发布、消费、ACK、重试和死信队列等通用能力。
- *
- * <p>{@code arch-infra} 只负责“怎么和 Redis Stream 通信”，不处理资源生成、知识库解析、
- * 社区审核等业务含义。具体 consumer 放在各业务模块里，消费后调用自己的 Service 和
- * {@code arch-task} 更新任务状态。</p>
+ * Redis Stream 基础客户端。
+ * 这里只定义发布、查看和确认三个简单动作，业务含义交给各业务模块处理。
  */
 public interface RedisStreamClient {
+
+    String publish(String streamKey, Map<String, String> body);
+
+    List<RedisStreamMessage> list(String streamKey);
+
+    void ack(String streamKey, String group, String messageId);
 }

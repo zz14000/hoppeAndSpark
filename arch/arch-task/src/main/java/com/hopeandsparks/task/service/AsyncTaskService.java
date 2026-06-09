@@ -1,11 +1,31 @@
 package com.hopeandsparks.task.service;
 
+import com.hopeandsparks.task.dto.CreateAsyncTaskCommand;
+import com.hopeandsparks.task.vo.AsyncTaskVO;
+
+import java.util.Optional;
+
 /**
- * 异步任务状态服务边界，负责创建和维护 {@code async_generation_task}。
- *
- * <p>业务模块需要发起异步任务时，先调用这里创建任务并拿到 taskId，再调用 infra 的
- * Redis Stream 客户端投递消息。consumer 执行开始、成功、失败、重试时也通过这里更新状态，
- * 让前台和后台都能按 taskId 查询进度。</p>
+ * 异步任务状态服务。
+ * 业务模块只关心任务创建和进度更新，真正的 Redis Stream 投递仍然放在 arch-infra。
  */
 public interface AsyncTaskService {
+
+    AsyncTaskVO create(CreateAsyncTaskCommand command);
+
+    Optional<AsyncTaskVO> findByTaskId(String taskId);
+
+    AsyncTaskVO getByTaskId(String taskId);
+
+    AsyncTaskVO start(String taskId);
+
+    AsyncTaskVO updateProgress(String taskId, int progress, String message);
+
+    AsyncTaskVO recordExternalRunId(String taskId, String externalRunId);
+
+    AsyncTaskVO increaseRetry(String taskId);
+
+    AsyncTaskVO markSuccess(String taskId, String message);
+
+    AsyncTaskVO markFailed(String taskId, String failureReason);
 }

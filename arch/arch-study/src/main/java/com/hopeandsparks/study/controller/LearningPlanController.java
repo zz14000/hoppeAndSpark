@@ -1,58 +1,95 @@
 package com.hopeandsparks.study.controller;
 
 import com.hopeandsparks.common.response.ApiResponse;
-import com.hopeandsparks.common.response.PlaceholderData;
+import com.hopeandsparks.common.response.PageResponse;
+import com.hopeandsparks.infra.security.AuthenticatedPrincipal;
+import com.hopeandsparks.resource.vo.ResourceCardVO;
+import com.hopeandsparks.study.dto.PlanAdjustRequest;
+import com.hopeandsparks.study.dto.PlanGenerateRequest;
+import com.hopeandsparks.study.service.LearningPlanService;
+import com.hopeandsparks.study.vo.LearningPlanVO;
+import com.hopeandsparks.study.vo.ResourceNetworkVO;
+import com.hopeandsparks.study.vo.TopologyVO;
+import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
-
-import static com.hopeandsparks.common.web.WebValueUtils.values;
-
 /**
- * 学习计划接口，负责当前计划、Strict 生成/调整计划、学习拓扑和知识点资源网络。
- *
- * <p>后续实现会读取用户画像、知识图谱、学习进度和资源数据，生成个性化 {@code study_plan}
- * 与 {@code study_task}。拓扑接口主要服务前端学习路径和知识网络页面。</p>
+ * Learning plan APIs for current plan, generation, adjustment and topology.
  */
 @RestController
 @RequestMapping("/api/v1/learning-plans")
 public class LearningPlanController {
 
+    private final LearningPlanService learningPlanService;
+
+    public LearningPlanController(LearningPlanService learningPlanService) {
+        this.learningPlanService = learningPlanService;
+    }
+
     @GetMapping("/current")
-    public ApiResponse<Map<String, Object>> currentPlan() {
-        return ApiResponse.ok(PlaceholderData.of("study", "currentPlan"));
+    public ApiResponse<LearningPlanVO> currentPlan(Authentication authentication) {
+        return ApiResponse.ok(learningPlanService.currentPlan(principal(authentication)));
     }
 
     @PostMapping("/generate")
-    public ApiResponse<Map<String, Object>> generatePlan(@RequestBody(required = false) Map<String, Object> request) {
-        return ApiResponse.ok(PlaceholderData.of("study", "generatePlan", values("request", request)));
+    public ApiResponse<LearningPlanVO> generatePlan(
+            Authentication authentication,
+            @Valid @RequestBody(required = false) PlanGenerateRequest request
+    ) {
+        return ApiResponse.ok(learningPlanService.generatePlan(principal(authentication), request));
     }
 
     @PutMapping("/{planId}/adjust")
-    public ApiResponse<Map<String, Object>> adjustPlan(
+    public ApiResponse<LearningPlanVO> adjustPlan(
+            Authentication authentication,
             @PathVariable String planId,
-            @RequestBody(required = false) Map<String, Object> request) {
-        return ApiResponse.ok(PlaceholderData.of("study", "adjustPlan", values("planId", planId, "request", request)));
+            @RequestBody(required = false) PlanAdjustRequest request
+    ) {
+        return ApiResponse.ok(learningPlanService.adjustPlan(principal(authentication), planId, request));
     }
 
     @GetMapping("/{planId}/topology")
-    public ApiResponse<Map<String, Object>> topology(@PathVariable String planId) {
-        return ApiResponse.ok(PlaceholderData.of("study", "topology", values("planId", planId)));
+    public ApiResponse<TopologyVO> topology(Authentication authentication, @PathVariable String planId) {
+        return ApiResponse.ok(learningPlanService.topology(principal(authentication), planId));
     }
 
     @GetMapping("/{planId}/topology/nodes/{nodeId}/resource-network")
-    public ApiResponse<Map<String, Object>> resourceNetwork(@PathVariable String planId, @PathVariable String nodeId) {
-        return ApiResponse.ok(PlaceholderData.of("study", "resourceNetwork", values("planId", planId, "nodeId", nodeId)));
+    public ApiResponse<ResourceNetworkVO> resourceNetwork(
+            Authentication authentication,
+            @PathVariable String planId,
+            @PathVariable String nodeId
+    ) {
+        return ApiResponse.ok(learningPlanService.resourceNetwork(principal(authentication), planId, nodeId));
     }
 
     @GetMapping("/{planId}/topology/nodes/{nodeId}/resources")
-    public ApiResponse<Map<String, Object>> nodeResources(@PathVariable String planId, @PathVariable String nodeId) {
-        return ApiResponse.ok(PlaceholderData.of("study", "nodeResources", values("planId", planId, "nodeId", nodeId)));
+    public ApiResponse<PageResponse<ResourceCardVO>> nodeResources(
+            Authentication authentication,
+            @PathVariable String planId,
+            @PathVariable String nodeId,
+            @RequestParam(defaultValue = "all") String type,
+            @RequestParam(defaultValue = "1") long page,
+            @RequestParam(defaultValue = "20") long pageSize
+    ) {
+        return ApiResponse.ok(learningPlanService.nodeResources(
+                principal(authentication),
+                planId,
+                nodeId,
+                type,
+                page,
+                pageSize
+        ));
+    }
+
+    private AuthenticatedPrincipal principal(Authentication authentication) {
+        return authentication == null ? null : (AuthenticatedPrincipal) authentication.getPrincipal();
     }
 }

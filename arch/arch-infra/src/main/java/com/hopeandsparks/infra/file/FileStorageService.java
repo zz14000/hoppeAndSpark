@@ -1,10 +1,16 @@
 package com.hopeandsparks.infra.file;
 
+import java.util.Optional;
+
 /**
- * 文件存储服务接口，是业务模块访问 MinIO 和 {@code sys_oss_file} 的统一入口。
- *
- * <p>后续知识库文档、资源导出、社区图片、头像等文件能力都应该通过这个接口完成，
- * 业务模块不要直接依赖 MinIO SDK，也不要自己拼 bucket 和 object key。</p>
+ * 文件存储服务接口。
+ * W1 先用 mock 实现，业务模块只拿 fileId 和访问地址，不直接接触 MinIO。
  */
 public interface FileStorageService {
+
+    UploadTokenVO createUploadToken(UploadTokenRequest request);
+
+    StoredFileVO completeUpload(CompleteUploadRequest request);
+
+    Optional<StoredFileVO> findByFileId(String fileId);
 }

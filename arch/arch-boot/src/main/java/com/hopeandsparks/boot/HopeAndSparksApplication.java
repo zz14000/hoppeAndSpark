@@ -2,6 +2,7 @@ package com.hopeandsparks.boot;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * Hope and Sparks 后端应用启动类。
@@ -11,6 +12,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * 只要包名仍在这个根包下面，并且 boot 的 POM 依赖了该模块，就会被装配进同一个 Spring Boot 应用。</p>
  */
 @SpringBootApplication(scanBasePackages = "com.hopeandsparks")
+@EnableScheduling
 public class HopeAndSparksApplication {
 
     public static void main(String[] args) {

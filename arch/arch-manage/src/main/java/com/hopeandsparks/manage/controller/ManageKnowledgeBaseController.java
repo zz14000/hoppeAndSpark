@@ -1,7 +1,20 @@
 package com.hopeandsparks.manage.controller;
 
 import com.hopeandsparks.common.response.ApiResponse;
-import com.hopeandsparks.common.response.PlaceholderData;
+import com.hopeandsparks.common.response.PageResponse;
+import com.hopeandsparks.infra.security.AuthenticatedPrincipal;
+import com.hopeandsparks.kb.dto.KbDocumentCreateRequest;
+import com.hopeandsparks.kb.dto.KbDocumentReparseRequest;
+import com.hopeandsparks.kb.dto.KbDocumentUpdateRequest;
+import com.hopeandsparks.kb.service.KbDocumentService;
+import com.hopeandsparks.kb.vo.KbChunkVO;
+import com.hopeandsparks.kb.vo.KbDocumentVO;
+import com.hopeandsparks.kb.vo.KbDocumentWriteVO;
+import com.hopeandsparks.kb.vo.KbParseStatusVO;
+import com.hopeandsparks.manage.service.ManageOperationLogService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,43 +27,143 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-import static com.hopeandsparks.common.web.WebValueUtils.values;
-
 /**
- * 后台知识库管理接口，负责文档列表、上传、更新、删除和解析状态查询。
- *
- * <p>这里承接 {@code /api/v1/manage/knowledge-base/**} 后台入口，但不直接修改
- * {@code kb_document} 的核心状态。上传、删除、重解析等动作后续必须调用
- * {@code arch-kb} 的 Service；文件元数据仍通过 {@code arch-infra} 写入。</p>
+ * Manage entry for knowledge-base document governance.
  */
 @RestController
 @RequestMapping("/api/v1/manage/knowledge-base/documents")
 public class ManageKnowledgeBaseController {
 
+    private final KbDocumentService kbDocumentService;
+    private final ManageOperationLogService manageOperationLogService;
+
+    public ManageKnowledgeBaseController(
+            KbDocumentService kbDocumentService,
+            ManageOperationLogService manageOperationLogService
+    ) {
+        this.kbDocumentService = kbDocumentService;
+        this.manageOperationLogService = manageOperationLogService;
+    }
+
     @GetMapping
-    public ApiResponse<Map<String, Object>> documents(@RequestParam Map<String, String> query) {
-        return ApiResponse.ok(PlaceholderData.of("manage", "kbDocuments", values("query", query)));
+    public ApiResponse<PageResponse<KbDocumentVO>> documents(@RequestParam Map<String, String> query) {
+        return ApiResponse.ok(kbDocumentService.listDocuments(query));
     }
 
     @PostMapping
-    public ApiResponse<Map<String, Object>> uploadDocument(@RequestBody(required = false) Map<String, Object> request) {
-        return ApiResponse.ok(PlaceholderData.of("manage", "uploadKbDocument", values("request", request)));
+    public ApiResponse<KbDocumentWriteVO> uploadDocument(
+            Authentication authentication,
+            HttpServletRequest servletRequest,
+            @Valid @RequestBody KbDocumentCreateRequest request
+    ) {
+        AuthenticatedPrincipal principal = principal(authentication);
+        KbDocumentWriteVO result = kbDocumentService.createDocument(principal, request);
+        manageOperationLogService.record(
+                principal,
+                "kb",
+                "create_document",
+                "kb_document",
+                parseTargetId(result),
+                "create kb document: " + request.title(),
+                servletRequest
+        );
+        return ApiResponse.ok("knowledge-base document created", result);
     }
 
     @PutMapping("/{documentId}")
-    public ApiResponse<Map<String, Object>> updateDocument(
+    public ApiResponse<KbDocumentWriteVO> updateDocument(
+            Authentication authentication,
+            HttpServletRequest servletRequest,
             @PathVariable String documentId,
-            @RequestBody(required = false) Map<String, Object> request) {
-        return ApiResponse.ok(PlaceholderData.of("manage", "updateKbDocument", values("documentId", documentId, "request", request)));
+            @Valid @RequestBody KbDocumentUpdateRequest request
+    ) {
+        AuthenticatedPrincipal principal = principal(authentication);
+        KbDocumentWriteVO result = kbDocumentService.updateDocument(principal, documentId, request);
+        manageOperationLogService.record(
+                principal,
+                "kb",
+                Boolean.TRUE.equals(request.reparse()) ? "update_and_reparse_document" : "update_document",
+                "kb_document",
+                parseTargetId(documentId),
+                "update kb document",
+                servletRequest
+        );
+        return ApiResponse.ok(result);
     }
 
     @DeleteMapping("/{documentId}")
-    public ApiResponse<Map<String, Object>> deleteDocument(@PathVariable String documentId) {
-        return ApiResponse.ok(PlaceholderData.of("manage", "deleteKbDocument", values("documentId", documentId)));
+    public ApiResponse<KbDocumentWriteVO> deleteDocument(
+            Authentication authentication,
+            HttpServletRequest servletRequest,
+            @PathVariable String documentId
+    ) {
+        AuthenticatedPrincipal principal = principal(authentication);
+        KbDocumentWriteVO result = kbDocumentService.deleteDocument(principal, documentId);
+        manageOperationLogService.record(
+                principal,
+                "kb",
+                "delete_document",
+                "kb_document",
+                parseTargetId(documentId),
+                "delete kb document",
+                servletRequest
+        );
+        return ApiResponse.ok(result);
+    }
+
+    @PostMapping("/{documentId}/reparse")
+    public ApiResponse<KbDocumentWriteVO> reparseDocument(
+            Authentication authentication,
+            HttpServletRequest servletRequest,
+            @PathVariable String documentId,
+            @RequestBody(required = false) KbDocumentReparseRequest request
+    ) {
+        AuthenticatedPrincipal principal = principal(authentication);
+        KbDocumentWriteVO result = kbDocumentService.reparseDocument(principal, documentId, request);
+        manageOperationLogService.record(
+                principal,
+                "kb",
+                "reparse_document",
+                "kb_document",
+                parseTargetId(documentId),
+                request == null ? "manual reparse" : "manual reparse: " + request.reason(),
+                servletRequest
+        );
+        return ApiResponse.ok(result);
     }
 
     @GetMapping("/{documentId}/parse-status")
-    public ApiResponse<Map<String, Object>> parseStatus(@PathVariable String documentId) {
-        return ApiResponse.ok(PlaceholderData.of("manage", "kbParseStatus", values("documentId", documentId)));
+    public ApiResponse<KbParseStatusVO> parseStatus(@PathVariable String documentId) {
+        return ApiResponse.ok(kbDocumentService.parseStatus(documentId));
+    }
+
+    @GetMapping("/{documentId}/chunks")
+    public ApiResponse<PageResponse<KbChunkVO>> chunks(
+            @PathVariable String documentId,
+            @RequestParam Map<String, String> query
+    ) {
+        return ApiResponse.ok(kbDocumentService.listChunks(documentId, query));
+    }
+
+    private AuthenticatedPrincipal principal(Authentication authentication) {
+        return authentication == null ? null : (AuthenticatedPrincipal) authentication.getPrincipal();
+    }
+
+    private Long parseTargetId(KbDocumentWriteVO result) {
+        if (result == null || result.document() == null) {
+            return null;
+        }
+        return parseTargetId(result.document().id());
+    }
+
+    private Long parseTargetId(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException exception) {
+            return null;
+        }
     }
 }

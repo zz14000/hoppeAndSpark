@@ -1,13 +1,16 @@
 package com.hopeandsparks.auth.controller;
 
+import com.hopeandsparks.auth.dto.UserChangeEmailRequest;
+import com.hopeandsparks.auth.dto.UserChangePasswordRequest;
 import com.hopeandsparks.auth.service.UserAuthService;
+import com.hopeandsparks.auth.vo.UserDeviceVO;
 import com.hopeandsparks.auth.vo.UserProfileVO;
 import com.hopeandsparks.common.response.ApiResponse;
-import com.hopeandsparks.common.response.PlaceholderData;
 import com.hopeandsparks.infra.security.AuthenticatedPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,9 +19,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
-
-import static com.hopeandsparks.common.web.WebValueUtils.values;
+import java.util.List;
 
 /**
  * 前台用户接口，负责当前用户、公开主页、资料修改、设备安全、密码和邮箱设置。
@@ -40,36 +41,39 @@ public class UserController {
     @Operation(summary = "获取当前登录用户", security = @SecurityRequirement(name = "bearerAuth"))
     @GetMapping("/api/v1/user/current")
     public ApiResponse<UserProfileVO> currentUser(Authentication authentication) {
-        return ApiResponse.ok(userAuthService.currentUser((AuthenticatedPrincipal) authentication.getPrincipal()));
-    }
-
-    @GetMapping("/api/v1/users/{userId}")
-    public ApiResponse<Map<String, Object>> userHomepage(@PathVariable String userId) {
-        return ApiResponse.ok(PlaceholderData.of("auth", "userHomepage", values("userId", userId)));
-    }
-
-    @PutMapping("/api/v1/user/profile")
-    public ApiResponse<Map<String, Object>> updateProfile(@RequestBody(required = false) Map<String, Object> request) {
-        return ApiResponse.ok(PlaceholderData.of("auth", "updateProfile", values("request", request)));
+        return ApiResponse.ok(userAuthService.currentUser(principal(authentication)));
     }
 
     @GetMapping("/api/v1/user/devices")
-    public ApiResponse<Map<String, Object>> listDevices() {
-        return ApiResponse.ok(PlaceholderData.of("auth", "listDevices"));
+    public ApiResponse<List<UserDeviceVO>> listDevices(Authentication authentication) {
+        return ApiResponse.ok(userAuthService.listDevices(principal(authentication)));
     }
 
     @DeleteMapping("/api/v1/user/devices/{sessionId}")
-    public ApiResponse<Map<String, Object>> offlineDevice(@PathVariable String sessionId) {
-        return ApiResponse.ok(PlaceholderData.of("auth", "offlineDevice", values("sessionId", sessionId)));
+    public ApiResponse<Void> offlineDevice(Authentication authentication, @PathVariable String sessionId) {
+        userAuthService.offlineDevice(principal(authentication), sessionId);
+        return ApiResponse.ok("设备已下线", null);
     }
 
     @PutMapping("/api/v1/user/password")
-    public ApiResponse<Map<String, Object>> changePassword(@RequestBody(required = false) Map<String, Object> request) {
-        return ApiResponse.ok(PlaceholderData.of("auth", "changePassword", values("request", request)));
+    public ApiResponse<Void> changePassword(
+            Authentication authentication,
+            @Valid @RequestBody UserChangePasswordRequest request
+    ) {
+        userAuthService.changePassword(principal(authentication), request);
+        return ApiResponse.ok("密码修改成功，请重新登录", null);
     }
 
     @PutMapping("/api/v1/user/email")
-    public ApiResponse<Map<String, Object>> changeEmail(@RequestBody(required = false) Map<String, Object> request) {
-        return ApiResponse.ok(PlaceholderData.of("auth", "changeEmail", values("request", request)));
+    public ApiResponse<Void> changeEmail(
+            Authentication authentication,
+            @Valid @RequestBody UserChangeEmailRequest request
+    ) {
+        userAuthService.changeEmail(principal(authentication), request);
+        return ApiResponse.ok("邮箱更新成功", null);
+    }
+
+    private AuthenticatedPrincipal principal(Authentication authentication) {
+        return authentication == null ? null : (AuthenticatedPrincipal) authentication.getPrincipal();
     }
 }

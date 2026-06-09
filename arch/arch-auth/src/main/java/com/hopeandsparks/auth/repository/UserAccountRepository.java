@@ -2,7 +2,10 @@ package com.hopeandsparks.auth.repository;
 
 import com.hopeandsparks.auth.dto.UserRegisterRequest;
 import com.hopeandsparks.auth.entity.UserAccount;
+import com.hopeandsparks.auth.entity.UserDeviceSession;
 import com.hopeandsparks.auth.entity.UserLoginSession;
+import com.hopeandsparks.auth.entity.UserProfileBasics;
+import com.hopeandsparks.auth.entity.UserSettings;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -13,6 +16,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -41,6 +45,40 @@ public class UserAccountRepository {
             rs.getInt("session_status")
     );
 
+    private final RowMapper<UserDeviceSession> deviceSessionMapper = (rs, rowNum) -> new UserDeviceSession(
+            rs.getLong("id"),
+            rs.getLong("user_id"),
+            rs.getString("session_token"),
+            rs.getString("device_id"),
+            rs.getString("device_name"),
+            rs.getString("client_type"),
+            rs.getString("ip_address"),
+            rs.getTimestamp("last_active_at") == null ? null : rs.getTimestamp("last_active_at").toLocalDateTime(),
+            rs.getTimestamp("expires_at").toLocalDateTime(),
+            rs.getInt("session_status")
+    );
+
+    private final RowMapper<UserSettings> settingsMapper = (rs, rowNum) -> new UserSettings(
+            rs.getLong("id"),
+            rs.getLong("user_id"),
+            rs.getInt("enable_tts") == 1,
+            rs.getInt("enable_ava_popup") == 1,
+            rs.getInt("enable_focus_mode") == 1,
+            rs.getInt("public_collection") == 1,
+            rs.getString("theme_mode"),
+            rs.getString("font_scale")
+    );
+
+    private final RowMapper<UserProfileBasics> profileBasicsMapper = (rs, rowNum) -> new UserProfileBasics(
+            rs.getLong("id"),
+            rs.getString("major_domain"),
+            rs.getString("grade_level"),
+            rs.getString("knowledge_base_level"),
+            rs.getString("learning_goal"),
+            rs.getString("self_discipline"),
+            rs.getString("current_weakness")
+    );
+
     public UserAccountRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
@@ -52,6 +90,15 @@ public class UserAccountRepository {
                 from sys_user
                 where username = ? and is_deleted = 0
                 """, username);
+    }
+
+    public Optional<UserAccount> findByAccount(String account) {
+        return queryUser("""
+                select id, username, nickname, password_hash, avatar_url, phone, email,
+                       account_status, ban_reason, ban_until
+                from sys_user
+                where (username = ? or email = ?) and is_deleted = 0
+                """, account, account);
     }
 
     public Optional<UserAccount> findById(Long id) {
@@ -94,6 +141,28 @@ public class UserAccountRepository {
                 email
         );
         return count != null && count > 0;
+    }
+
+    public boolean existsByEmailForOtherUser(String email, Long userId) {
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+        Integer count = jdbcTemplate.queryForObject(
+                "select count(1) from sys_user where email = ? and id <> ? and is_deleted = 0",
+                Integer.class,
+                email,
+                userId
+        );
+        return count != null && count > 0;
+    }
+
+    public Optional<UserAccount> findByEmail(String email) {
+        return queryUser("""
+                select id, username, nickname, password_hash, avatar_url, phone, email,
+                       account_status, ban_reason, ban_until
+                from sys_user
+                where email = ? and is_deleted = 0
+                """, email);
     }
 
     public Long insertUser(UserRegisterRequest request, String passwordHash) {
@@ -182,6 +251,104 @@ public class UserAccountRepository {
                 """, sessionToken);
     }
 
+    public List<UserDeviceSession> listActiveSessions(Long userId) {
+        return jdbcTemplate.query("""
+                select id, user_id, session_token, device_id, device_name, client_type,
+                       ip_address, last_active_at, expires_at, session_status
+                from user_login_session
+                where user_id = ? and session_status = 1 and is_deleted = 0
+                order by last_active_at desc, id desc
+                """, deviceSessionMapper, userId);
+    }
+
+    public boolean invalidateSessionById(Long userId, Long sessionId) {
+        int updated = jdbcTemplate.update("""
+                update user_login_session
+                set session_status = 0
+                where id = ? and user_id = ? and is_deleted = 0
+                """, sessionId, userId);
+        return updated > 0;
+    }
+
+    public void invalidateUserSessions(Long userId) {
+        jdbcTemplate.update("""
+                update user_login_session
+                set session_status = 0
+                where user_id = ? and is_deleted = 0
+                """, userId);
+    }
+
+    public void updatePassword(Long userId, String passwordHash) {
+        jdbcTemplate.update("""
+                update sys_user
+                set password_hash = ?
+                where id = ? and is_deleted = 0
+                """, passwordHash, userId);
+    }
+
+    public void updateEmail(Long userId, String email) {
+        jdbcTemplate.update("""
+                update sys_user
+                set email = ?
+                where id = ? and is_deleted = 0
+                """, blankToNull(email), userId);
+    }
+
+    public Optional<UserProfileBasics> findProfileBasics(Long userId) {
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject("""
+                    select id, major_domain, grade_level, knowledge_base_level,
+                           learning_goal, self_discipline, current_weakness
+                    from user_profile
+                    where user_id = ? and is_deleted = 0
+                    """, profileBasicsMapper, userId));
+        } catch (EmptyResultDataAccessException exception) {
+            return Optional.empty();
+        }
+    }
+
+    public Optional<UserSettings> findSettings(Long userId) {
+        try {
+            return Optional.ofNullable(jdbcTemplate.queryForObject("""
+                    select id, user_id, enable_tts, enable_ava_popup, enable_focus_mode,
+                           public_collection, theme_mode, font_scale
+                    from user_settings
+                    where user_id = ? and is_deleted = 0
+                    """, settingsMapper, userId));
+        } catch (EmptyResultDataAccessException exception) {
+            return Optional.empty();
+        }
+    }
+
+    public void updateSettings(
+            Long userId,
+            Boolean enableTts,
+            Boolean enableAvaPopup,
+            Boolean enableFocusMode,
+            Boolean publicCollection,
+            String themeMode,
+            String fontScale
+    ) {
+        jdbcTemplate.update("""
+                update user_settings
+                set enable_tts = coalesce(?, enable_tts),
+                    enable_ava_popup = coalesce(?, enable_ava_popup),
+                    enable_focus_mode = coalesce(?, enable_focus_mode),
+                    public_collection = coalesce(?, public_collection),
+                    theme_mode = coalesce(?, theme_mode),
+                    font_scale = coalesce(?, font_scale)
+                where user_id = ? and is_deleted = 0
+                """,
+                boolToInt(enableTts),
+                boolToInt(enableAvaPopup),
+                boolToInt(enableFocusMode),
+                boolToInt(publicCollection),
+                blankToNull(themeMode),
+                blankToNull(fontScale),
+                userId
+        );
+    }
+
     private Optional<UserAccount> queryUser(String sql, Object... args) {
         try {
             return Optional.ofNullable(jdbcTemplate.queryForObject(sql, userMapper, args));
@@ -192,5 +359,12 @@ public class UserAccountRepository {
 
     private String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value;
+    }
+
+    private Integer boolToInt(Boolean value) {
+        if (value == null) {
+            return null;
+        }
+        return value ? 1 : 0;
     }
 }

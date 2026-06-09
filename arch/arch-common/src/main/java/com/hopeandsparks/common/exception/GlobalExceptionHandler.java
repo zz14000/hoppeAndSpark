@@ -1,7 +1,9 @@
 package com.hopeandsparks.common.exception;
 
 import com.hopeandsparks.common.response.ApiResponse;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -26,6 +28,15 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getDefaultMessage() == null ? "Invalid request parameters" : error.getDefaultMessage())
                 .orElse("Invalid request parameters");
         return ApiResponse.fail(400, message);
+    }
+
+    @ExceptionHandler({
+            IllegalArgumentException.class,
+            MissingServletRequestParameterException.class,
+            HttpMessageNotReadableException.class
+    })
+    public ApiResponse<Void> handleBadRequest(Exception exception) {
+        return ApiResponse.fail(400, "请求参数错误");
     }
 
     @ExceptionHandler(Exception.class)

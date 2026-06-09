@@ -1,13 +1,15 @@
 package com.hopeandsparks.auth.controller;
 
+import com.hopeandsparks.auth.dto.PasswordResetConfirmRequest;
+import com.hopeandsparks.auth.dto.PasswordResetRequest;
 import com.hopeandsparks.auth.dto.UserLoginRequest;
 import com.hopeandsparks.auth.dto.UserLogoutRequest;
 import com.hopeandsparks.auth.dto.UserRefreshRequest;
 import com.hopeandsparks.auth.dto.UserRegisterRequest;
 import com.hopeandsparks.auth.service.UserAuthService;
+import com.hopeandsparks.auth.vo.PasswordResetTokenVO;
 import com.hopeandsparks.auth.vo.UserAuthTokenVO;
 import com.hopeandsparks.common.response.ApiResponse;
-import com.hopeandsparks.common.response.PlaceholderData;
 import com.hopeandsparks.infra.security.SecurityProperties;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,10 +21,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Map;
-
-import static com.hopeandsparks.common.web.WebValueUtils.values;
 
 /**
  * 前台认证接口，承接注册、登录、session token 刷新 access token、退出登录和找回密码。
@@ -81,13 +79,14 @@ public class AuthController {
     }
 
     @PostMapping("/password/reset-request")
-    public ApiResponse<Map<String, Object>> requestPasswordReset(@RequestBody(required = false) Map<String, Object> request) {
-        return ApiResponse.ok(PlaceholderData.of("auth", "requestPasswordReset", values("request", request)));
+    public ApiResponse<PasswordResetTokenVO> requestPasswordReset(@Valid @RequestBody PasswordResetRequest request) {
+        return ApiResponse.ok("重置凭证已生成", userAuthService.requestPasswordReset(request));
     }
 
     @PostMapping("/password/reset-confirm")
-    public ApiResponse<Map<String, Object>> confirmPasswordReset(@RequestBody(required = false) Map<String, Object> request) {
-        return ApiResponse.ok(PlaceholderData.of("auth", "confirmPasswordReset", values("request", request)));
+    public ApiResponse<Void> confirmPasswordReset(@Valid @RequestBody PasswordResetConfirmRequest request) {
+        userAuthService.confirmPasswordReset(request);
+        return ApiResponse.ok("密码重置成功", null);
     }
 
     private String extractToken(String authorization) {

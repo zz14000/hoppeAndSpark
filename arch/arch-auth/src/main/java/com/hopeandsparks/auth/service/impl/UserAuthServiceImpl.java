@@ -1,15 +1,26 @@
 package com.hopeandsparks.auth.service.impl;
 
+import com.hopeandsparks.auth.dto.PasswordResetConfirmRequest;
+import com.hopeandsparks.auth.dto.PasswordResetRequest;
+import com.hopeandsparks.auth.dto.UserChangeEmailRequest;
+import com.hopeandsparks.auth.dto.UserChangePasswordRequest;
 import com.hopeandsparks.auth.dto.UserLoginRequest;
 import com.hopeandsparks.auth.dto.UserLogoutRequest;
 import com.hopeandsparks.auth.dto.UserRefreshRequest;
 import com.hopeandsparks.auth.dto.UserRegisterRequest;
+import com.hopeandsparks.auth.dto.UserSettingsUpdateRequest;
 import com.hopeandsparks.auth.entity.UserAccount;
+import com.hopeandsparks.auth.entity.UserDeviceSession;
 import com.hopeandsparks.auth.entity.UserLoginSession;
+import com.hopeandsparks.auth.entity.UserProfileBasics;
+import com.hopeandsparks.auth.entity.UserSettings;
 import com.hopeandsparks.auth.repository.UserAccountRepository;
 import com.hopeandsparks.auth.service.UserAuthService;
+import com.hopeandsparks.auth.vo.PasswordResetTokenVO;
 import com.hopeandsparks.auth.vo.UserAuthTokenVO;
+import com.hopeandsparks.auth.vo.UserDeviceVO;
 import com.hopeandsparks.auth.vo.UserProfileVO;
+import com.hopeandsparks.auth.vo.UserSettingsVO;
 import com.hopeandsparks.common.exception.BusinessException;
 import com.hopeandsparks.infra.redis.AuthTokenRedisStore;
 import com.hopeandsparks.infra.security.AuthenticatedPrincipal;
@@ -23,7 +34,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class UserAuthServiceImpl implements UserAuthService {
@@ -36,6 +50,7 @@ public class UserAuthServiceImpl implements UserAuthService {
     private final JwtTokenService jwtTokenService;
     private final AuthTokenRedisStore tokenRedisStore;
     private final SecurityProperties securityProperties;
+    private final Map<String, ResetTicket> resetTickets = new ConcurrentHashMap<>();
 
     /**
      * 装配前台认证所需的账号仓储、密码编码器、JWT 服务和 Redis 登录态存储。
@@ -78,7 +93,7 @@ public class UserAuthServiceImpl implements UserAuthService {
     @Override
     @Transactional
     public UserAuthTokenVO login(UserLoginRequest request, HttpServletRequest servletRequest) {
-        UserAccount user = userAccountRepository.findByUsername(request.username())
+        UserAccount user = userAccountRepository.findByAccount(request.account())
                 .orElseThrow(() -> new BusinessException(401, "用户名或密码错误"));
         ensureUserCanLogin(user);
         if (!passwordEncoder.matches(request.password(), user.passwordHash())) {
@@ -137,6 +152,118 @@ public class UserAuthServiceImpl implements UserAuthService {
         UserAccount user = userAccountRepository.findById(principal.id())
                 .orElseThrow(() -> new BusinessException(401, "用户不存在"));
         return toProfile(user);
+    }
+
+    /**
+     * W2 阶段先生成内存里的重置凭证，真实邮箱服务接入后再改成邮件发送。
+     */
+    @Override
+    public PasswordResetTokenVO requestPasswordReset(PasswordResetRequest request) {
+        UserAccount user = userAccountRepository.findByEmail(request.email())
+                .orElseThrow(() -> new BusinessException(404, "邮箱未绑定前台账号"));
+        String resetToken = UUID.randomUUID().toString().replace("-", "");
+        resetTickets.put(resetToken, new ResetTicket(user.id(), LocalDateTime.now().plusMinutes(15)));
+        return new PasswordResetTokenVO(resetToken, 15 * 60);
+    }
+
+    /**
+     * 使用找回密码凭证重置密码，并让数据库中的登录会话失效。
+     */
+    @Override
+    @Transactional
+    public void confirmPasswordReset(PasswordResetConfirmRequest request) {
+        ResetTicket ticket = resetTickets.remove(request.resetToken());
+        if (ticket == null || ticket.expiresAt().isBefore(LocalDateTime.now())) {
+            throw new BusinessException(400, "重置凭证无效或已过期");
+        }
+        userAccountRepository.updatePassword(ticket.userId(), passwordEncoder.encode(request.newPassword()));
+        userAccountRepository.invalidateUserSessions(ticket.userId());
+    }
+
+    @Override
+    public List<UserDeviceVO> listDevices(AuthenticatedPrincipal principal) {
+        Long userId = requireUserId(principal);
+        String currentSessionToken = principal.sessionToken();
+        return userAccountRepository.listActiveSessions(userId).stream()
+                .map(session -> toDeviceVO(session, currentSessionToken))
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public void offlineDevice(AuthenticatedPrincipal principal, String sessionId) {
+        Long userId = requireUserId(principal);
+        Long parsedSessionId = parseId(sessionId, "登录会话ID格式不正确");
+        boolean updated = userAccountRepository.invalidateSessionById(userId, parsedSessionId);
+        if (!updated) {
+            throw new BusinessException(404, "登录会话不存在");
+        }
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(AuthenticatedPrincipal principal, UserChangePasswordRequest request) {
+        Long userId = requireUserId(principal);
+        UserAccount user = userAccountRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(401, "用户不存在"));
+        if (!passwordEncoder.matches(request.oldPassword(), user.passwordHash())) {
+            throw new BusinessException(400, "旧密码不正确");
+        }
+        userAccountRepository.updatePassword(userId, passwordEncoder.encode(request.newPassword()));
+        userAccountRepository.invalidateUserSessions(userId);
+    }
+
+    @Override
+    @Transactional
+    public void changeEmail(AuthenticatedPrincipal principal, UserChangeEmailRequest request) {
+        Long userId = requireUserId(principal);
+        UserAccount user = userAccountRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(401, "用户不存在"));
+        if (userAccountRepository.existsByEmailForOtherUser(request.email(), userId)) {
+            throw new BusinessException(409, "邮箱已绑定其他账号");
+        }
+        if (request.password() != null && !request.password().isBlank()
+                && !passwordEncoder.matches(request.password(), user.passwordHash())) {
+            throw new BusinessException(400, "密码不正确");
+        }
+        userAccountRepository.updateEmail(userId, request.email());
+    }
+
+    @Override
+    public UserSettingsVO getSettings(AuthenticatedPrincipal principal) {
+        Long userId = requireUserId(principal);
+        UserSettings settings = userAccountRepository.findSettings(userId)
+                .orElseGet(() -> {
+                    userAccountRepository.insertDefaultSettings(userId);
+                    return userAccountRepository.findSettings(userId)
+                            .orElseThrow(() -> new BusinessException(500, "用户设置初始化失败"));
+                });
+        return toSettingsVO(settings);
+    }
+
+    @Override
+    @Transactional
+    public UserSettingsVO updateSettings(AuthenticatedPrincipal principal, UserSettingsUpdateRequest request) {
+        Long userId = requireUserId(principal);
+        if (userAccountRepository.findSettings(userId).isEmpty()) {
+            userAccountRepository.insertDefaultSettings(userId);
+        }
+        userAccountRepository.updateSettings(
+                userId,
+                firstNonNull(request.enableTts(), boolFromMap(request.notification(), "tts")),
+                firstNonNull(request.enableAvaPopup(), avaPopupFromRequest(request)),
+                firstNonNull(request.enableFocusMode(), boolFromMap(request.learningPreference(), "focusMode")),
+                firstNonNull(request.publicCollection(), boolFromMap(request.privacy(), "profileVisible")),
+                firstText(request.themeMode(), textFromMap(request.theme(), "mode")),
+                firstText(request.fontScale(), textFromMap(request.learningPreference(), "fontScale"))
+        );
+        return getSettings(principal);
+    }
+
+    @Override
+    public void clearCache(AuthenticatedPrincipal principal) {
+        requireUserId(principal);
+        // W2 暂时没有用户本地缓存表，接口保留为成功，便于前端触发清理动作。
     }
 
     /**
@@ -204,14 +331,120 @@ public class UserAuthServiceImpl implements UserAuthService {
      * 这里不暴露 passwordHash、状态和封禁信息，避免敏感字段进入响应体。
      */
     private UserProfileVO toProfile(UserAccount user) {
+        UserProfileBasics profile = userAccountRepository.findProfileBasics(user.id()).orElse(null);
         return new UserProfileVO(
                 String.valueOf(user.id()),
                 user.username(),
                 user.nickname(),
                 user.avatarUrl(),
                 user.phone(),
-                user.email()
+                user.email(),
+                profile != null,
+                profile == null ? null : profile.learningGoal(),
+                profile == null ? null : profile.majorDomain(),
+                profile == null ? null : profile.gradeLevel(),
+                profile == null ? null : profile.knowledgeBaseLevel(),
+                profile == null ? null : profile.selfDiscipline()
         );
+    }
+
+    private UserDeviceVO toDeviceVO(UserDeviceSession session, String currentSessionToken) {
+        return new UserDeviceVO(
+                String.valueOf(session.id()),
+                session.deviceId(),
+                session.deviceName(),
+                session.clientType(),
+                session.ipAddress(),
+                session.lastActiveAt(),
+                session.expiresAt(),
+                session.sessionToken() != null && session.sessionToken().equals(currentSessionToken)
+        );
+    }
+
+    private UserSettingsVO toSettingsVO(UserSettings settings) {
+        return new UserSettingsVO(
+                Map.of("language", "zh-CN", "autoStart", true),
+                Map.of(
+                        "sageGuideLevel", 8,
+                        "coachPressureMode", settings.enableFocusMode(),
+                        "avaInterventionFrequency", settings.enableAvaPopup() ? "medium" : "off"
+                ),
+                Map.of("mode", nullToDefault(settings.themeMode(), "light"), "animation", true),
+                Map.of(
+                        "agent", settings.enableAvaPopup(),
+                        "community", true,
+                        "system", true,
+                        "tts", settings.enableTts()
+                ),
+                Map.of(
+                        "profileVisible", settings.publicCollection(),
+                        "learningStatsVisible", false
+                ),
+                Map.of(
+                        "focusMode", settings.enableFocusMode(),
+                        "fontScale", nullToDefault(settings.fontScale(), "normal")
+                )
+        );
+    }
+
+    private Long requireUserId(AuthenticatedPrincipal principal) {
+        if (principal == null || principal.type() != IdentityType.USER) {
+            throw new BusinessException(401, "请先登录前台账号");
+        }
+        return principal.id();
+    }
+
+    private Long parseId(String id, String message) {
+        try {
+            return Long.parseLong(id);
+        } catch (NumberFormatException exception) {
+            throw new BusinessException(400, message);
+        }
+    }
+
+    private Boolean avaPopupFromRequest(UserSettingsUpdateRequest request) {
+        Object frequency = request.agent() == null ? null : request.agent().get("avaInterventionFrequency");
+        if (frequency instanceof String text) {
+            return !"off".equalsIgnoreCase(text);
+        }
+        return boolFromMap(request.agent(), "enableAvaPopup");
+    }
+
+    private Boolean boolFromMap(Map<String, Object> map, String key) {
+        if (map == null || !map.containsKey(key)) {
+            return null;
+        }
+        Object value = map.get(key);
+        if (value instanceof Boolean bool) {
+            return bool;
+        }
+        if (value instanceof String text) {
+            return Boolean.parseBoolean(text);
+        }
+        return null;
+    }
+
+    private String textFromMap(Map<String, Object> map, String key) {
+        if (map == null || !map.containsKey(key)) {
+            return null;
+        }
+        Object value = map.get(key);
+        return value == null ? null : String.valueOf(value);
+    }
+
+    private Boolean firstNonNull(Boolean first, Boolean second) {
+        return first != null ? first : second;
+    }
+
+    private String firstText(String first, String second) {
+        if (first != null && !first.isBlank()) {
+            return first;
+        }
+        return second;
+    }
+
+    private String nullToDefault(String value, String defaultValue) {
+        return value == null || value.isBlank() ? defaultValue : value;
     }
 
     /**
@@ -224,5 +457,8 @@ public class UserAuthServiceImpl implements UserAuthService {
             return forwardedFor.split(",")[0].trim();
         }
         return request.getRemoteAddr();
+    }
+
+    private record ResetTicket(Long userId, LocalDateTime expiresAt) {
     }
 }

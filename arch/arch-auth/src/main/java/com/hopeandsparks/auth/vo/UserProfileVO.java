@@ -14,12 +14,30 @@ public record UserProfileVO(
         String nickname,
 
         @Schema(description = "头像URL")
-        String avatarUrl,
+        String avatar,
 
         @Schema(description = "手机号", example = "13800000000")
         String phone,
 
         @Schema(description = "邮箱", example = "spark@example.com")
-        String email
+        String email,
+
+        @Schema(description = "是否完成首次画像")
+        boolean onboarded,
+
+        @Schema(description = "画像摘要或学习目标")
+        String bio,
+
+        @Schema(description = "学习方向")
+        String learningDomain,
+
+        @Schema(description = "学段/年级")
+        String gradeLevel,
+
+        @Schema(description = "基础水平")
+        String knowledgeBaseLevel,
+
+        @Schema(description = "自律程度")
+        String selfDiscipline
 ) {
 }

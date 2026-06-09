@@ -1,10 +1,33 @@
 package com.hopeandsparks.community.consumer;
 
+import com.hopeandsparks.community.service.CommunityModerationService;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
 /**
- * 社区内容审核消费者边界，用于消费文章和评论的异步审核任务。
- *
- * <p>发布接口只负责先落库为 pending，真正审核由这个 consumer 触发 AI 审核或规则审核。
- * 审核结果再回写文章/评论状态，并通过 {@code arch-task} 记录任务进度和失败原因。</p>
+ * Consumer boundary for article and comment moderation messages.
  */
+@Component
 public class CommunityModerationConsumer {
+
+    private final CommunityModerationService communityModerationService;
+
+    public CommunityModerationConsumer(CommunityModerationService communityModerationService) {
+        this.communityModerationService = communityModerationService;
+    }
+
+    @Scheduled(
+            fixedDelayString = "${hope.community.moderation.fixed-delay-ms:5000}",
+            initialDelayString = "${hope.community.moderation.initial-delay-ms:5000}"
+    )
+    public void consumeScheduled() {
+        communityModerationService.consumePendingMessages();
+    }
+
+    /**
+     * Manual hook for tests and demos when waiting for the scheduler is inconvenient.
+     */
+    public int consumeOnce() {
+        return communityModerationService.consumePendingMessages();
+    }
 }

@@ -1,6 +1,7 @@
 # Hope and Sparks Backend Code Map
 
 > Source of truth: root `arch.md` v0.12.
+> Coze orchestration source: root `Coze-多Agent-UML设计图-重构版.md`.
 > Scope: `arch` Maven modular-monolith backend project.
 > Root package: `com.hopeandsparks`.
 
@@ -242,6 +243,8 @@ It should call the owning business module for state changes:
 | Streaming | SSE | agent dialog and optional task progress |
 | Realtime messaging | WebSocket | IM and notifications can be postponed |
 
+Detailed multi-agent orchestration lives in root `Coze-多Agent-UML设计图-重构版.md`. Use it for `SparkEntry`, `TaskPlanner`, `ProfileBuilder`, `ContextNormalizer`, `TaskScheduler`, `Sage`, `Coach`, `Strict`, `Nebula`, `Aggregator`, `ReviewPackBuilder`, `Horizon`, revise-loop decisions, L1/L2 memory behavior, and the standard task/agent/review output protocols.
+
 ## 8. API Conventions
 
 - All APIs use `/api/v1` prefix.
@@ -272,6 +275,8 @@ Use Redis Stream plus task status for long-running workflows:
 - embedding/vectorization;
 - community article/comment moderation;
 - evaluation reports when long-running.
+
+For Coze multi-agent work, implement orchestration in the document order: `TaskPlanner`, `ContextNormalizer`, `TaskScheduler`, `Aggregator`, `ReviewPackBuilder`/`Horizon`/revise loop, then L1/L2 memory integration.
 
 ## 10. Database Notes
 

@@ -1,10 +1,33 @@
 package com.hopeandsparks.kb.consumer;
 
+import com.hopeandsparks.kb.service.KbDocumentService;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
 /**
- * 知识库解析任务消费者边界，用于消费 {@code queue:kb:parse} 这类 Redis Stream 消息。
- *
- * <p>后续这里会读取文档文件、解析切片、写入 {@code kb_chunk_record}，并继续投递向量化任务。
- * 任务开始、成功、失败和重试都应同步更新 {@code arch-task} 中的异步任务状态。</p>
+ * Consumer boundary for KB parse messages.
  */
+@Component
 public class KbParseConsumer {
+
+    private final KbDocumentService kbDocumentService;
+
+    public KbParseConsumer(KbDocumentService kbDocumentService) {
+        this.kbDocumentService = kbDocumentService;
+    }
+
+    @Scheduled(
+            fixedDelayString = "${hope.kb.parse.fixed-delay-ms:5000}",
+            initialDelayString = "${hope.kb.parse.initial-delay-ms:5000}"
+    )
+    public void consumeScheduled() {
+        kbDocumentService.consumePendingParseMessages();
+    }
+
+    /**
+     * Manual hook for tests and demos.
+     */
+    public int consumeOnce() {
+        return kbDocumentService.consumePendingParseMessages();
+    }
 }

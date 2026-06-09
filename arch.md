@@ -1,8 +1,8 @@
 # Hope and Sparks 后端架构草案
 
-> 版本：v0.12  
-> 状态：对话讨论稿  
-> 资料来源：`资源/Hope and Sparks开发文档改.md`、`资源/Hope_and_Sparks_API接口文档.md`、`资源/apifox-openapi.yaml`、`资源/数据库设计-正式版.md`、`资源/hope_sparks.sql`
+> 版本：v0.12
+> 状态：对话讨论稿
+> 资料来源：`资源/Hope and Sparks开发文档改.md`、`资源/Hope_and_Sparks_API接口文档.md`、`资源/apifox-openapi.yaml`、`资源/数据库设计-正式版.md`、`资源/hope_sparks.sql`、`Coze-多Agent-UML设计图-重构版.md`
 
 ## 0. 已确认架构决策
 
@@ -836,6 +836,8 @@ AgentGateway
 | `agent_chat_message.id` | message_id | `agent_chat_message` 扩展或元数据字段 |
 | `agentCode` | bot_id / workflow_id | `sys_agent_config` |
 | `async_generation_task.id` | workflow run id | `arch-task` 管理的 `async_generation_task.external_run_id` |
+
+Coze 多 Agent 编排的详细 UML、节点职责、通信协议、审查回修闭环和双层记忆规则见根目录 `Coze-多Agent-UML设计图-重构版.md`。实现 `SparkEntry`、`TaskPlanner`、`ProfileBuilder`、`ContextNormalizer`、`TaskScheduler`、`Aggregator`、`ReviewPackBuilder`、`Horizon` 或各 Agent 输出协议时，以该文档作为细化设计依据，并继续遵守本节的模块边界：业务模块只依赖 `arch-infra` 适配层，不直接暴露 Coze SDK。
 
 ### 10.2 Coze Bot / Workflow 映射
 

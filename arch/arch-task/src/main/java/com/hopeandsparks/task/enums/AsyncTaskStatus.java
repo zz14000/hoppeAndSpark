@@ -8,7 +8,7 @@ package com.hopeandsparks.task.enums;
  */
 public enum AsyncTaskStatus {
     PENDING,
-    RUNNING,
+    PROCESSING,
     SUCCESS,
     FAILED,
     CANCELED

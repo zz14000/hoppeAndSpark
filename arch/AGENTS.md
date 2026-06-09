@@ -2,6 +2,8 @@
 
 This file is the local working guide for coding agents in `arch`. It is derived from root `arch.md` v0.12 and should be followed when changing the backend skeleton.
 
+For Coze multi-agent orchestration, also read root `../Coze-多Agent-UML设计图-重构版.md`. It defines `SparkEntry`, `TaskPlanner`, `ProfileBuilder`, `ContextNormalizer`, `TaskScheduler`, `Sage`, `Coach`, `Strict`, `Nebula`, `Aggregator`, `ReviewPackBuilder`, `Horizon`, the revise loop, and L1/L2 memory rules.
+
 ## 1. Mission
 
 Build the Hope and Sparks backend as a Java 17 + Spring Boot 3.x + Maven modular monolith.
@@ -14,7 +16,7 @@ Primary goals:
 - isolate external systems behind adapters and gateways;
 - make the first implementation easy to start, test, and extend.
 
-Do not redesign the architecture casually. Treat root `arch.md` and `CODE_MAP.md` as the current source of architectural truth.
+Do not redesign the architecture casually. Treat root `arch.md`, root `Coze-多Agent-UML设计图-重构版.md`, and `CODE_MAP.md` as the current source of architectural truth for backend and Agent work.
 
 ## 2. Current Architecture
 
@@ -92,6 +94,23 @@ Use API/database naming separation:
 - database columns: snake_case;
 - when API docs, DTO/VO, and SQL schema disagree, `资源/hope_sparks.sql` wins;
 - frontend-facing IDs: string values in VO responses.
+
+## 4.1 Code Simplicity And Comments
+
+Write implementation code at an ordinary university-student level, i.e. `普通大学生水平`. Prefer readable, direct code over cleverness:
+
+- keep controller methods thin and obvious;
+- keep service methods short enough to explain during a project defense;
+- avoid unnecessary design patterns, deep inheritance, reflection, complex generics, and over-abstracted helper layers;
+- use clear names instead of compact or tricky code;
+- add comments to new classes, public methods, DTO/VO fields when useful, and important business steps;
+- comments should explain business intent and state transitions, not repeat obvious Java syntax.
+
+`Agent 接入先空着`: Agent/Coze integration is intentionally left empty for now:
+
+- define ports, DTOs, mock adapters, and TODO placeholders only;
+- do not call real Coze APIs, configure real Bot/Workflow credentials, or add SDK-specific request logic;
+- business flows that need Agent output should return deterministic mock/placeholder data until explicit integration work starts.
 
 ## 5. Implementation Priorities
 
@@ -285,9 +304,17 @@ Agent/LLM boundaries:
 
 - business code depends on `AgentGateway` and `LlmGateway`;
 - do not expose Coze SDK details outside `arch-infra`;
+- keep real Agent/Coze provider integration empty in the current phase; use ports, mocks, and deterministic placeholders;
 - use Bot-style calls for dialog agents;
 - use Workflow-style calls for long or structured outputs;
 - store local-to-external conversation/message IDs for traceability.
+
+Coze multi-agent orchestration:
+
+- follow `../Coze-多Agent-UML设计图-重构版.md` for agent roles, task protocols, review/revise decisions, and L1/L2 memory behavior;
+- implement orchestration in this order: `TaskPlanner`, `ContextNormalizer`, `TaskScheduler`, `Aggregator`, `ReviewPackBuilder` + `Horizon` + revise loop, then L1/L2 memory integration;
+- keep `task_id`, `task_type`, `target_agent`, `source_agent`, `status`, and `final_decision` fields stable across DTO/VO and gateway boundaries;
+- use `arch-task` for async task state and `arch-infra` for Coze/Redis transport; do not bury orchestration state inside controllers.
 
 ## 9. Security And Config
 
@@ -341,11 +368,13 @@ rg --files arch
 rg "class .*Controller" arch
 rg "TODO|FIXME" arch
 rg "sys_agent_config|async_generation_task|RedisStream|Coze|MinIO" arch
+rg "TaskPlanner|ContextNormalizer|TaskScheduler|ReviewPackBuilder|Horizon" "Coze-多Agent-UML设计图-重构版.md" arch
 ```
 
 Before changing architecture-level behavior, reread:
 
 - root `arch.md`;
+- root `Coze-多Agent-UML设计图-重构版.md` for Agent orchestration changes;
 - `arch/CODE_MAP.md`;
 - affected module POM files.
 
@@ -365,6 +394,7 @@ Do not require real Coze, MinIO, Chroma, or cloud Redis credentials for the defa
 
 - Do not introduce microservices for MVP.
 - Do not add direct SDK calls from controllers or business services when an infrastructure port should exist.
+- Do not implement real Agent/Coze calls in this phase; leave integration as interfaces, mocks, or TODO placeholders.
 - Do not put business source code in top-level `arch/src`.
 - Do not return entities directly from controllers.
 - Do not place backend admin identity inside `arch-auth`.
