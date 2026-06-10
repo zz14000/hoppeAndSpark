@@ -39,12 +39,20 @@ public class KnowledgeCacheServiceImpl implements KnowledgeCacheService {
                 "query", safe(query),
                 "topK", 5
         ));
-        Map<String, Double> scores = rerank(query, response.results());
+        return cacheCandidates(userId, projectId, query, response.results());
+    }
+
+    @Override
+    public List<String> cacheCandidates(String userId, String projectId, String query, List<WebSearchResult> results) {
+        if (results == null || results.isEmpty()) {
+            return List.of();
+        }
+        Map<String, Double> scores = rerank(query, results);
         List<KbCandidateRecord> candidates = kbCandidateGovernanceService.recordCandidates(
                 safe(userId),
                 safe(projectId),
                 safe(query),
-                response.results(),
+                results,
                 scores
         );
         toolRegistry.call("memory_write", Map.of(

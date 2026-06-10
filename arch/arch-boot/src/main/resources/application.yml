@@ -79,6 +79,17 @@ hope:
       enabled: ${KB_OCR_ENABLED:false}
       command: ${KB_OCR_COMMAND:tesseract}
       language: ${KB_OCR_LANGUAGE:chi_sim+eng}
+  agent:
+    runtime: ${HOPE_AGENT_RUNTIME:linear}
+    graph:
+      max-revisions: ${HOPE_AGENT_GRAPH_MAX_REVISIONS:2}
+    memory:
+      l1:
+        ttl-minutes: ${HOPE_AGENT_MEMORY_L1_TTL_MINUTES:180}
+      l2:
+        enabled: ${HOPE_AGENT_MEMORY_L2_ENABLED:true}
+    web-search:
+      default-allowed: ${HOPE_AGENT_WEB_SEARCH_DEFAULT_ALLOWED:false}
   security:
     jwt:
       token-header: Authorization

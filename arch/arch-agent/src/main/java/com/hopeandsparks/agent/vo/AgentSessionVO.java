@@ -7,6 +7,7 @@ public record AgentSessionVO(
         String agentKey,
         String title,
         String projectId,
+        String courseId,
         String courseName,
         LocalDateTime createdAt,
         boolean mock

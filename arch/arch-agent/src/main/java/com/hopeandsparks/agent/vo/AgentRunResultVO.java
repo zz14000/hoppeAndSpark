@@ -8,16 +8,23 @@ import java.util.List;
 import java.util.Map;
 
 public record AgentRunResultVO(
+        String runId,
+        long stateVersion,
+        String intent,
         String reviewStatus,
-        String answerText,
+        String finalAnswer,
+        List<String> stepList,
         String diagramScript,
         String diagramImagePath,
         List<String> citations,
-        List<String> memoryWrites,
+        List<String> learningPlan,
+        List<String> memoryUpdates,
         List<String> cacheCandidates,
         List<AgentTaskResult> taskResults,
         ReviewDecision reviewDecision,
-        List<ToolCallRecord> toolCalls,
+        List<ToolCallRecord> toolTrace,
+        Map<String, Object> artifacts,
+        List<String> qualityFlags,
         Map<String, Object> payload,
         boolean mock
 ) {

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 public class SparkEntry {
 
     public AgentIntent route(AgentRunRequest request) {
-        String mode = request.mode() == null ? "" : request.mode().toLowerCase();
+        String mode = request.agentMode() == null ? "" : request.agentMode().toLowerCase();
         String query = request.userQuery() == null ? "" : request.userQuery().toLowerCase();
         if ("diagram".equals(mode) || query.contains("流程图") || query.contains("mermaid")) {
             return AgentIntent.DIAGRAM;

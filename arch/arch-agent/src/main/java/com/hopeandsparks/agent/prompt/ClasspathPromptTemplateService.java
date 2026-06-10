@@ -22,4 +22,17 @@ public class ClasspathPromptTemplateService implements PromptTemplateService {
             return new PromptTemplate(normalized, "Prompt load failed: " + exception.getMessage(), true);
         }
     }
+
+    @Override
+    public String render(String agentName, java.util.Map<String, Object> variables) {
+        String content = load(agentName).content();
+        String rendered = content;
+        if (variables == null || variables.isEmpty()) {
+            return rendered;
+        }
+        for (var entry : variables.entrySet()) {
+            rendered = rendered.replace("{{" + entry.getKey() + "}}", String.valueOf(entry.getValue()));
+        }
+        return rendered;
+    }
 }

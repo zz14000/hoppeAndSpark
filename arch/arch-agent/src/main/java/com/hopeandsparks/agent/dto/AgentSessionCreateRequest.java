@@ -4,6 +4,7 @@ public record AgentSessionCreateRequest(
         String agentKey,
         String title,
         String projectId,
+        String courseId,
         String courseName
 ) {
 }

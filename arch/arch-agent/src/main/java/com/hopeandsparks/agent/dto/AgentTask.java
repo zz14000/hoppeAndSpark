@@ -1,6 +1,7 @@
 package com.hopeandsparks.agent.dto;
 
 import com.hopeandsparks.agent.enums.AgentName;
+import com.hopeandsparks.agent.enums.OutputMode;
 import com.hopeandsparks.agent.enums.TaskType;
 
 import java.util.List;
@@ -13,6 +14,9 @@ public record AgentTask(
         String taskGoal,
         int priority,
         List<String> dependsOn,
+        boolean requiresRag,
+        boolean requiresDiagram,
+        OutputMode outputMode,
         Map<String, Object> rawParams
 ) {
 }

@@ -85,9 +85,15 @@ public class AgentSessionController {
 
     private Map<String, Object> eventData(AgentStreamEventVO event) {
         if ("done".equals(event.type())) {
-            return Map.of("messageId", event.messageId(), "mock", event.mock());
+            return Map.of("messageId", event.messageId(), "payload", event.payload(), "mock", event.mock());
         }
-        return Map.of("content", event.content(), "messageId", event.messageId(), "mock", event.mock());
+        return Map.of(
+                "content", event.content(),
+                "messageId", event.messageId(),
+                "payload", event.payload(),
+                "stage", event.type(),
+                "mock", event.mock()
+        );
     }
 
     private AuthenticatedPrincipal principal(Authentication authentication) {

@@ -25,6 +25,7 @@ public class AgentSessionServiceImpl implements AgentSessionService {
 
     private final AgentOrchestrationService orchestrationService;
     private final Map<String, List<AgentMessageVO>> messages = new ConcurrentHashMap<>();
+    private final Map<String, String> messageRunMapping = new ConcurrentHashMap<>();
 
     public AgentSessionServiceImpl(AgentOrchestrationService orchestrationService) {
         this.orchestrationService = orchestrationService;
@@ -35,7 +36,7 @@ public class AgentSessionServiceImpl implements AgentSessionService {
         String id = "session-" + System.currentTimeMillis();
         messages.putIfAbsent(id, new ArrayList<>());
         return new AgentSessionVO(id, safe(request.agentKey(), "sage"), safe(request.title(), "Agent 会话"),
-                safe(request.projectId(), "default"), safe(request.courseName(), ""), LocalDateTime.now(), true);
+                safe(request.projectId(), "default"), safe(request.courseId(), ""), safe(request.courseName(), ""), LocalDateTime.now(), true);
     }
 
     @Override
@@ -56,24 +57,28 @@ public class AgentSessionServiceImpl implements AgentSessionService {
                 sessionId,
                 messageId,
                 request.content(),
-                request.mode(),
+                safe(request.agentMode(), "qa"),
+                safe(request.outputPreference(), "auto"),
                 "default",
+                safe(request.courseId(), ""),
                 "",
-                "",
+                request.knowledgePointIds() == null || request.knowledgePointIds().isEmpty() ? "" : request.knowledgePointIds().getFirst(),
+                request.knowledgePointIds() == null ? List.of() : request.knowledgePointIds(),
+                Boolean.TRUE.equals(request.allowWebSearch()),
+                safe(request.strictnessLevel(), "standard"),
                 Boolean.TRUE.equals(request.renderMermaid()),
                 Map.of()
         ));
         String answerId = "assistant-" + messageId;
-        messages.get(sessionId).add(new AgentMessageVO(answerId, sessionId, "assistant", result.answerText(), LocalDateTime.now(), true));
-        return new AgentMessageSendVO(answerId, sessionId, result.answerText(), result.diagramScript(), result.diagramImagePath(), true);
+        messages.get(sessionId).add(new AgentMessageVO(answerId, sessionId, "assistant", result.finalAnswer(), LocalDateTime.now(), true));
+        messageRunMapping.put(answerId, result.runId());
+        messageRunMapping.put(messageId, result.runId());
+        return new AgentMessageSendVO(answerId, sessionId, result.finalAnswer(), result.diagramScript(), result.diagramImagePath(), result.runId(), true);
     }
 
     @Override
     public List<AgentStreamEventVO> streamEvents(AuthenticatedPrincipal principal, String sessionId, String messageId) {
-        return List.of(
-                new AgentStreamEventVO("delta", messageId, "mock stream event from LangGraph4j skeleton", true),
-                new AgentStreamEventVO("done", messageId, "", true)
-        );
+        return orchestrationService.streamEvents(messageRunMapping.getOrDefault(messageId, messageId));
     }
 
     private String safe(String value, String defaultValue) {
