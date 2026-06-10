@@ -18,6 +18,7 @@ import com.hopeandsparks.kb.repository.KbCandidateGovernanceRepository;
 import com.hopeandsparks.kb.repository.KbCandidateRecord;
 import com.hopeandsparks.kb.repository.KbDocumentRecord;
 import com.hopeandsparks.kb.repository.KbDocumentRepository;
+import com.hopeandsparks.kb.service.GovernanceResult;
 import com.hopeandsparks.kb.service.KbCandidateGovernanceService;
 import com.hopeandsparks.kb.service.KbDocumentService;
 import com.hopeandsparks.kb.vo.KbDocumentWriteVO;
@@ -66,6 +67,41 @@ public class KbCandidateGovernanceServiceImpl implements KbCandidateGovernanceSe
         this.embeddingGateway = embeddingGateway;
         this.rerankGateway = rerankGateway;
         this.kbProperties = kbProperties;
+    }
+
+    @Override
+    public GovernanceResult governDocument(String documentId, String userId, String projectId, String collection) {
+        if (blank(collection) || FORMAL_COLLECTION.equals(collection)) {
+            return new GovernanceResult("SKIPPED", "", "formal collection skip governance", false);
+        }
+        KbDocumentRecord document = kbDocumentRepository.findDocument(parseLong(documentId))
+                .orElseThrow(() -> new IllegalArgumentException("KB document not found: " + documentId));
+        if (!CANDIDATE_COLLECTION.equals(collection) && !"url".equalsIgnoreCase(document.sourceType())) {
+            return new GovernanceResult("SKIPPED", "", "non-candidate source skip governance", false);
+        }
+        String content = safeText(document.contentText());
+        String sourceUrl = normalizeUrl(document.sourceUrl());
+        double rerankScore = 1.0D;
+        double retrievalScore = 1.0D;
+        double duplicateSimilarity = nearestFormalSimilarity(userId, projectId, content);
+        boolean approvedUrlAbsent = !kbDocumentRepository.existsActiveSourceUrl(userId, projectId, FORMAL_COLLECTION, sourceUrl);
+        boolean domainWhitelisted = isWhitelisted(sourceUrl);
+        boolean contentEnough = content.length() >= kbProperties.getGovernance().getMinContentLength();
+        boolean rerankPass = rerankScore >= kbProperties.getGovernance().getMinRerankScore();
+        boolean retrievalPass = retrievalScore >= kbProperties.getGovernance().getMinRetrievalScore();
+        boolean duplicatePass = duplicateSimilarity < kbProperties.getGovernance().getMaxDuplicateSimilarity();
+        String reason = promotionReason(domainWhitelisted, rerankPass, retrievalPass, contentEnough, approvedUrlAbsent, duplicatePass, duplicateSimilarity);
+        if (!(domainWhitelisted && rerankPass && retrievalPass && contentEnough && approvedUrlAbsent && duplicatePass)) {
+            return new GovernanceResult("CANDIDATE_PENDING", "", reason, false);
+        }
+        Optional<KbCandidateRecord> existing = repository.list(Map.of("documentId", documentId, "size", "1")).list().stream().findFirst();
+        if (existing.isPresent() && existing.get().approvedDocumentId() != null && !existing.get().approvedDocumentId().isBlank()) {
+            return new GovernanceResult(existing.get().promotionStatus(), existing.get().approvedDocumentId(), existing.get().promotionReason(), false);
+        }
+        String approvedDocumentId = promoteToFormal(userId, projectId,
+                new WebSearchResult(document.title(), sourceUrl, content, LocalDateTime.now(), retrievalScore),
+                content);
+        return new GovernanceResult("AUTO_PROMOTED_ACTIVE", approvedDocumentId, reason, false);
     }
 
     @Override

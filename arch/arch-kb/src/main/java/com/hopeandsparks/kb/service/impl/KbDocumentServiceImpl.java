@@ -25,6 +25,8 @@ import com.hopeandsparks.kb.dto.KbDocumentUpdateRequest;
 import com.hopeandsparks.kb.repository.KbChunkRecord;
 import com.hopeandsparks.kb.repository.KbDocumentRecord;
 import com.hopeandsparks.kb.repository.KbDocumentRepository;
+import com.hopeandsparks.kb.service.GovernanceResult;
+import com.hopeandsparks.kb.service.KbCandidateGovernanceService;
 import com.hopeandsparks.kb.service.KbDocumentService;
 import com.hopeandsparks.kb.vo.KbChunkCorrectResultVO;
 import com.hopeandsparks.kb.vo.KbChunkVO;
@@ -54,6 +56,7 @@ public class KbDocumentServiceImpl implements KbDocumentService {
     private final KbProperties kbProperties;
     private final AsyncTaskService asyncTaskService;
     private final RedisStreamClient redisStreamClient;
+    private final KbCandidateGovernanceService kbCandidateGovernanceService;
 
     public KbDocumentServiceImpl(
             KbDocumentRepository repository,
@@ -64,7 +67,8 @@ public class KbDocumentServiceImpl implements KbDocumentService {
             AiProperties aiProperties,
             KbProperties kbProperties,
             AsyncTaskService asyncTaskService,
-            RedisStreamClient redisStreamClient
+            RedisStreamClient redisStreamClient,
+            KbCandidateGovernanceService kbCandidateGovernanceService
     ) {
         this.repository = repository;
         this.documentParser = documentParser;
@@ -75,6 +79,7 @@ public class KbDocumentServiceImpl implements KbDocumentService {
         this.kbProperties = kbProperties;
         this.asyncTaskService = asyncTaskService;
         this.redisStreamClient = redisStreamClient;
+        this.kbCandidateGovernanceService = kbCandidateGovernanceService;
     }
 
     @Override
@@ -212,7 +217,23 @@ public class KbDocumentServiceImpl implements KbDocumentService {
 
     @Override
     public int consumePendingParseMessages() {
-        List<com.hopeandsparks.infra.redis.RedisStreamMessage> messages = redisStreamClient.list(kbProperties.getParse().getStreamKey());
+        redisStreamClient.ensureGroup(kbProperties.getParse().getStreamKey(), kbProperties.getParse().getConsumerGroup());
+        List<com.hopeandsparks.infra.redis.RedisStreamMessage> messages = redisStreamClient.readGroup(
+                kbProperties.getParse().getStreamKey(),
+                kbProperties.getParse().getConsumerGroup(),
+                kbProperties.getParse().getConsumerName(),
+                kbProperties.getParse().getReadCount(),
+                kbProperties.getParse().getBlockMs()
+        );
+        if (messages.isEmpty()) {
+            messages = redisStreamClient.readPending(
+                    kbProperties.getParse().getStreamKey(),
+                    kbProperties.getParse().getConsumerGroup(),
+                    kbProperties.getParse().getConsumerName(),
+                    kbProperties.getParse().getClaimIdleMs(),
+                    kbProperties.getParse().getReadCount()
+            );
+        }
         int handled = 0;
         for (com.hopeandsparks.infra.redis.RedisStreamMessage message : messages) {
             String taskId = message.body().getOrDefault("taskId", "");
@@ -224,8 +245,14 @@ public class KbDocumentServiceImpl implements KbDocumentService {
             if (!"QUEUED".equals(status) && !"RETRY_WAITING".equals(status)) {
                 continue;
             }
-            parseDocument(documentId, taskId);
-            redisStreamClient.ack(kbProperties.getParse().getStreamKey(), kbProperties.getParse().getConsumerGroup(), message.messageId());
+            try {
+                parseDocument(documentId, taskId);
+                redisStreamClient.ack(kbProperties.getParse().getStreamKey(), kbProperties.getParse().getConsumerGroup(), message.messageId());
+            } catch (RuntimeException exception) {
+                if (!isRetryable(errorCode(exception)) || exceededRetry(taskId)) {
+                    redisStreamClient.ack(kbProperties.getParse().getStreamKey(), kbProperties.getParse().getConsumerGroup(), message.messageId());
+                }
+            }
             handled++;
         }
         if (handled == 0) {
@@ -248,33 +275,11 @@ public class KbDocumentServiceImpl implements KbDocumentService {
         }
         repository.updateParseResult(id, "parsing", record.totalTokens(), record.chunkCount(), "");
         try {
-            recordEvent(taskId, documentId, "PARSE", "STARTED", taskStartedAt, null, 0L, record.title(), "", "", "");
-            ParsedDocument parsed = documentParser.parse(new DocumentParseRequest(
-                    String.valueOf(id),
-                    record.title(),
-                    record.userId(),
-                    record.projectId(),
-                    record.domain(),
-                    record.collectionName(),
-                    inferSourceType(record),
-                    record.fileId(),
-                    record.sourceUrl(),
-                    record.contentText()
-            ));
-            recordEvent(taskId, documentId, "PARSE", "SUCCESS", taskStartedAt, LocalDateTime.now(),
-                    duration(taskStartedAt), record.title(), "parsedSections=" + parsed.sections().size(), "", "");
-            LocalDateTime chunkStartedAt = LocalDateTime.now();
-            ChunkedDocument chunked = chunkingService.chunk(parsed);
-            recordEvent(taskId, documentId, "CHUNK", "SUCCESS", chunkStartedAt, LocalDateTime.now(),
-                    duration(chunkStartedAt), "sections=" + parsed.sections().size(), "chunks=" + chunked.chunks().size(), "", "");
+            ParsedDocument parsed = stageParse(taskId, record, taskStartedAt);
+            stageOcr(taskId, record, parsed);
+            ChunkedDocument chunked = stageChunk(taskId, documentId, parsed);
             List<String> texts = chunked.chunks().stream().map(DocumentChunk::text).toList();
-            LocalDateTime embedStartedAt = LocalDateTime.now();
-            EmbeddingResponse embedding = embeddingGateway.embed(new EmbeddingRequest(texts, Map.of(
-                    "documentId", documentId,
-                    "collection", record.collectionName()
-            )));
-            recordEvent(taskId, documentId, "EMBED", "SUCCESS", embedStartedAt, LocalDateTime.now(),
-                    duration(embedStartedAt), "chunkCount=" + texts.size(), "vectorCount=" + embedding.vectors().size(), "", "");
+            EmbeddingResponse embedding = stageEmbed(taskId, documentId, record, texts);
             List<VectorRecord> records = new ArrayList<>();
             List<KbChunkRecord> chunkRecords = new ArrayList<>();
             int totalTokens = 0;
@@ -293,11 +298,9 @@ public class KbDocumentServiceImpl implements KbDocumentService {
                 records.add(new VectorRecord(pointId, chunk.text(), embedding.vectors().get(i), metadata));
                 chunkRecords.add(new KbChunkRecord(null, id, chunk.chunkIndex(), chunk.text(), chunk.tokenSize(), pointId, 1, true, chunk.sectionPath()));
             }
-            LocalDateTime upsertStartedAt = LocalDateTime.now();
-            chromaVectorStoreGateway.upsert(new UpsertRequest(record.userId(), record.projectId(), record.collectionName(), records));
-            recordEvent(taskId, documentId, "VECTOR_UPSERT", "SUCCESS", upsertStartedAt, LocalDateTime.now(),
-                    duration(upsertStartedAt), "records=" + records.size(), "collection=" + record.collectionName(), "", "");
+            stageVectorUpsert(taskId, documentId, record, records);
             repository.replaceChunks(id, chunkRecords);
+            stageGovernance(taskId, documentId, record);
             repository.updateParseResult(id, "success", totalTokens, chunkRecords.size(), "");
             if (hasTask(taskId)) {
                 asyncTaskService.markSuccess(taskId, "kb ingest success");
@@ -306,12 +309,132 @@ public class KbDocumentServiceImpl implements KbDocumentService {
                     duration(taskStartedAt), "documentVersion=" + record.documentVersion(), "chunkCount=" + chunkRecords.size(), "", "");
         } catch (RuntimeException exception) {
             repository.updateParseResult(id, "failed", record.totalTokens(), record.chunkCount(), exception.getMessage());
-            if (hasTask(taskId)) {
-                asyncTaskService.markFailed(taskId, exception.getMessage());
-            }
+            handleTaskFailure(taskId, documentId, exception);
             recordEvent(taskId, documentId, "DONE", "FAILED", taskStartedAt, LocalDateTime.now(),
-                    duration(taskStartedAt), "documentVersion=" + record.documentVersion(), "", "KB_PARSE_FAILED", exception.getMessage());
+                    duration(taskStartedAt), "documentVersion=" + record.documentVersion(), "", errorCode(exception), exception.getMessage());
             throw exception;
+        }
+    }
+
+    private ParsedDocument stageParse(String taskId, KbDocumentRecord record, LocalDateTime startedAt) {
+        recordEvent(taskId, String.valueOf(record.id()), "PARSE", "STARTED", startedAt, null, 0L, record.title(), "", "", "");
+        try {
+            ParsedDocument parsed = documentParser.parse(new DocumentParseRequest(
+                    String.valueOf(record.id()),
+                    record.title(),
+                    record.userId(),
+                    record.projectId(),
+                    record.domain(),
+                    record.collectionName(),
+                    inferSourceType(record),
+                    record.fileId(),
+                    record.sourceUrl(),
+                    record.contentText()
+            ));
+            recordEvent(taskId, String.valueOf(record.id()), "PARSE", "SUCCESS", startedAt, LocalDateTime.now(),
+                    duration(startedAt), record.title(), "parsedSections=" + parsed.sections().size(), "", "");
+            return parsed;
+        } catch (RuntimeException exception) {
+            recordEvent(taskId, String.valueOf(record.id()), "PARSE", "FAILED", startedAt, LocalDateTime.now(),
+                    duration(startedAt), record.title(), "", errorCode(exception), exception.getMessage());
+            throw wrap(exception, stageErrorCode("PARSE", exception));
+        }
+    }
+
+    private void stageOcr(String taskId, KbDocumentRecord record, ParsedDocument parsed) {
+        LocalDateTime startedAt = LocalDateTime.now();
+        recordEvent(taskId, String.valueOf(record.id()), "OCR", "STARTED", startedAt, null, 0L, record.fileId(), "", "", "");
+        boolean ocrRequired = boolMeta(parsed, "ocrRequired");
+        boolean ocrApplied = boolMeta(parsed, "ocrApplied");
+        if (!ocrRequired) {
+            recordEvent(taskId, String.valueOf(record.id()), "OCR", "SKIPPED", startedAt, LocalDateTime.now(),
+                    duration(startedAt), "ocrRequired=false", "ocrApplied=" + ocrApplied, "", "");
+            return;
+        }
+        if (!ocrApplied && kbProperties.getOcr().isFailOnEmpty()) {
+            RuntimeException exception = new IllegalStateException("OCR required but no OCR text extracted");
+            recordEvent(taskId, String.valueOf(record.id()), "OCR", "FAILED", startedAt, LocalDateTime.now(),
+                    duration(startedAt), metaText(parsed, "ocrSourceType"), "", "KB_OCR_FAILED", exception.getMessage());
+            throw wrap(exception, "KB_OCR_FAILED");
+        }
+        if (!ocrApplied) {
+            recordEvent(taskId, String.valueOf(record.id()), "OCR", "SKIPPED", startedAt, LocalDateTime.now(),
+                    duration(startedAt), metaText(parsed, "ocrSourceType"), "ocrApplied=false", "", "");
+            return;
+        }
+        recordEvent(taskId, String.valueOf(record.id()), "OCR", "SUCCESS", startedAt, LocalDateTime.now(),
+                duration(startedAt), metaText(parsed, "ocrSourceType"), "ocrApplied=true", "", "");
+    }
+
+    private ChunkedDocument stageChunk(String taskId, String documentId, ParsedDocument parsed) {
+        LocalDateTime startedAt = LocalDateTime.now();
+        recordEvent(taskId, documentId, "CHUNK", "STARTED", startedAt, null, 0L, "sections=" + parsed.sections().size(), "", "", "");
+        try {
+            ChunkedDocument chunked = chunkingService.chunk(parsed);
+            recordEvent(taskId, documentId, "CHUNK", "SUCCESS", startedAt, LocalDateTime.now(),
+                    duration(startedAt), "sections=" + parsed.sections().size(), "chunks=" + chunked.chunks().size(), "", "");
+            return chunked;
+        } catch (RuntimeException exception) {
+            recordEvent(taskId, documentId, "CHUNK", "FAILED", startedAt, LocalDateTime.now(),
+                    duration(startedAt), "sections=" + parsed.sections().size(), "", "KB_CHUNK_FAILED", exception.getMessage());
+            throw wrap(exception, "KB_CHUNK_FAILED");
+        }
+    }
+
+    private EmbeddingResponse stageEmbed(String taskId, String documentId, KbDocumentRecord record, List<String> texts) {
+        LocalDateTime startedAt = LocalDateTime.now();
+        recordEvent(taskId, documentId, "EMBED", "STARTED", startedAt, null, 0L, "chunkCount=" + texts.size(), "", "", "");
+        try {
+            EmbeddingResponse embedding = embeddingGateway.embed(new EmbeddingRequest(texts, Map.of(
+                    "documentId", documentId,
+                    "collection", record.collectionName()
+            )));
+            recordEvent(taskId, documentId, "EMBED", "SUCCESS", startedAt, LocalDateTime.now(),
+                    duration(startedAt), "chunkCount=" + texts.size(), "vectorCount=" + embedding.vectors().size(), "", "");
+            return embedding;
+        } catch (RuntimeException exception) {
+            recordEvent(taskId, documentId, "EMBED", "FAILED", startedAt, LocalDateTime.now(),
+                    duration(startedAt), "chunkCount=" + texts.size(), "", "KB_EMBED_FAILED", exception.getMessage());
+            throw wrap(exception, "KB_EMBED_FAILED");
+        }
+    }
+
+    private void stageVectorUpsert(String taskId, String documentId, KbDocumentRecord record, List<VectorRecord> records) {
+        LocalDateTime startedAt = LocalDateTime.now();
+        recordEvent(taskId, documentId, "VECTOR_UPSERT", "STARTED", startedAt, null, 0L, "records=" + records.size(), "", "", "");
+        try {
+            chromaVectorStoreGateway.upsert(new UpsertRequest(record.userId(), record.projectId(), record.collectionName(), records));
+            recordEvent(taskId, documentId, "VECTOR_UPSERT", "SUCCESS", startedAt, LocalDateTime.now(),
+                    duration(startedAt), "records=" + records.size(), "collection=" + record.collectionName(), "", "");
+        } catch (RuntimeException exception) {
+            recordEvent(taskId, documentId, "VECTOR_UPSERT", "FAILED", startedAt, LocalDateTime.now(),
+                    duration(startedAt), "records=" + records.size(), "", "KB_VECTOR_UPSERT_FAILED", exception.getMessage());
+            throw wrap(exception, "KB_VECTOR_UPSERT_FAILED");
+        }
+    }
+
+    private void stageGovernance(String taskId, String documentId, KbDocumentRecord record) {
+        LocalDateTime startedAt = LocalDateTime.now();
+        recordEvent(taskId, documentId, "GOVERNANCE", "STARTED", startedAt, null, 0L, record.collectionName(), "", "", "");
+        if ("edu_ground_truth".equals(record.collectionName()) && inferSourceType(record) != DocumentSourceType.URL) {
+            recordEvent(taskId, documentId, "GOVERNANCE", "SKIPPED", startedAt, LocalDateTime.now(),
+                    duration(startedAt), record.collectionName(), "formal collection", "", "");
+            return;
+        }
+        try {
+            GovernanceResult result = kbCandidateGovernanceService.governDocument(
+                    documentId,
+                    record.userId(),
+                    record.projectId(),
+                    record.collectionName()
+            );
+            String status = "SKIPPED".equals(result.promotionStatus()) ? "SKIPPED" : "SUCCESS";
+            recordEvent(taskId, documentId, "GOVERNANCE", status, startedAt, LocalDateTime.now(),
+                    duration(startedAt), record.collectionName(), result.promotionStatus() + ":" + result.reason(), "", "");
+        } catch (RuntimeException exception) {
+            recordEvent(taskId, documentId, "GOVERNANCE", "FAILED", startedAt, LocalDateTime.now(),
+                    duration(startedAt), record.collectionName(), "", "KB_GOVERNANCE_FAILED", exception.getMessage());
+            throw wrap(exception, "KB_GOVERNANCE_FAILED");
         }
     }
 
@@ -431,5 +554,88 @@ public class KbDocumentServiceImpl implements KbDocumentService {
 
     private long duration(LocalDateTime startedAt) {
         return java.time.Duration.between(startedAt, LocalDateTime.now()).toMillis();
+    }
+
+    private void handleTaskFailure(String taskId, String documentId, RuntimeException exception) {
+        if (!hasTask(taskId)) {
+            return;
+        }
+        String code = errorCode(exception);
+        if (isRetryable(code) && !exceededRetry(taskId)) {
+            asyncTaskService.increaseRetry(taskId);
+            asyncTaskService.markRetryWaiting(taskId, code);
+            redisStreamClient.publish(kbProperties.getParse().getStreamKey(), Map.of(
+                    "taskId", taskId,
+                    "documentId", documentId
+            ));
+            return;
+        }
+        asyncTaskService.markFailed(taskId, code + ":" + exception.getMessage());
+    }
+
+    private boolean exceededRetry(String taskId) {
+        if (!hasTask(taskId)) {
+            return false;
+        }
+        com.hopeandsparks.task.vo.AsyncTaskVO task = asyncTaskService.getByTaskId(taskId);
+        return task.retryCount() >= task.maxRetry();
+    }
+
+    private boolean isRetryable(String code) {
+        return switch (safe(code, "")) {
+            case "KB_URL_FETCH_FAILED", "KB_OCR_FAILED", "KB_EMBED_FAILED", "KB_VECTOR_UPSERT_FAILED", "KB_GOVERNANCE_FAILED" -> true;
+            default -> false;
+        };
+    }
+
+    private String errorCode(RuntimeException exception) {
+        Throwable current = exception;
+        while (current != null) {
+            if (current instanceof StageFailureException stageFailureException) {
+                return stageFailureException.code();
+            }
+            current = current.getCause();
+        }
+        return "KB_PARSE_FAILED";
+    }
+
+    private RuntimeException wrap(RuntimeException exception, String code) {
+        if (exception instanceof StageFailureException) {
+            return exception;
+        }
+        return new StageFailureException(code, exception.getMessage(), exception);
+    }
+
+    private String stageErrorCode(String stage, RuntimeException exception) {
+        return switch (stage) {
+            case "PARSE" -> exception.getMessage() != null && exception.getMessage().contains("File not found") ? "KB_FILE_NOT_FOUND" : "KB_PARSE_FAILED";
+            default -> "KB_PARSE_FAILED";
+        };
+    }
+
+    private boolean boolMeta(ParsedDocument parsed, String key) {
+        Object value = parsed.metadata().get(key);
+        if (value instanceof Boolean flag) {
+            return flag;
+        }
+        return value != null && Boolean.parseBoolean(String.valueOf(value));
+    }
+
+    private String metaText(ParsedDocument parsed, String key) {
+        Object value = parsed.metadata().get(key);
+        return value == null ? "" : String.valueOf(value);
+    }
+
+    private static final class StageFailureException extends RuntimeException {
+        private final String code;
+
+        private StageFailureException(String code, String message, Throwable cause) {
+            super(message, cause);
+            this.code = code;
+        }
+
+        public String code() {
+            return code;
+        }
     }
 }

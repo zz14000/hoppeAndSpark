@@ -106,8 +106,16 @@ public class RoutingDocumentParser implements DocumentParser {
         try (org.apache.pdfbox.pdmodel.PDDocument document = Loader.loadPDF(path.toFile())) {
             PDFTextStripper stripper = new PDFTextStripper();
             String text = normalize(stripper.getText(document));
+            Map<String, Object> metadata = new LinkedHashMap<>();
+            metadata.put("sourceType", "file");
+            metadata.put("fileId", fileId);
+            metadata.put("fileName", fileName);
+            metadata.put("pageCount", document.getNumberOfPages());
+            metadata.put("ocrApplied", false);
+            metadata.put("ocrRequired", text.isBlank());
+            metadata.put("ocrSourceType", "pdf");
             return fromText(blankToDefault(title, fileName), text, "application/pdf",
-                    Map.of("sourceType", "file", "fileId", fileId, "fileName", fileName, "pageCount", document.getNumberOfPages()));
+                    metadata);
         } catch (IOException exception) {
             throw new IllegalStateException("Failed to parse PDF: " + exception.getMessage(), exception);
         }
@@ -177,14 +185,27 @@ public class RoutingDocumentParser implements DocumentParser {
     private ParsedDocument parseImage(String title, Path path, String fileName, String fileId) {
         String ocrText = normalize(ocrService.extract(path));
         String text = ocrText.isBlank() ? "Image asset: " + fileName : ocrText;
-        return fromText(blankToDefault(title, fileName), text, "image/*",
-                Map.of("sourceType", "image", "fileId", fileId, "fileName", fileName, "ocrApplied", !ocrText.isBlank()));
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        metadata.put("sourceType", "image");
+        metadata.put("fileId", fileId);
+        metadata.put("fileName", fileName);
+        metadata.put("ocrApplied", !ocrText.isBlank());
+        metadata.put("ocrRequired", true);
+        metadata.put("ocrSourceType", "image");
+        return fromText(blankToDefault(title, fileName), text, "image/*", metadata);
     }
 
     private ParsedDocument fromText(String title, String text, String mediaType, Map<String, Object> metadata) {
         String normalized = normalize(text);
         List<ParsedSection> sections = splitSections(normalized, blankToDefault(title, "Untitled"));
-        return new ParsedDocument(blankToDefault(title, "Untitled"), normalized, mediaType, sections, metadata);
+        Map<String, Object> enriched = new LinkedHashMap<>();
+        enriched.put("ocrApplied", false);
+        enriched.put("ocrRequired", false);
+        enriched.put("ocrSourceType", "none");
+        if (metadata != null) {
+            enriched.putAll(metadata);
+        }
+        return new ParsedDocument(blankToDefault(title, "Untitled"), normalized, mediaType, sections, enriched);
     }
 
     private List<ParsedSection> splitSections(String text, String fallbackTitle) {

@@ -1,4 +1,8 @@
 spring:
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:../.env[.properties]
   application:
     name: hope-and-sparks
   datasource:
@@ -19,6 +23,62 @@ server:
   port: 8080
 
 hope:
+  infra:
+    minio:
+      enabled: ${MINIO_ENABLED:true}
+      endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+      public-endpoint: ${MINIO_PUBLIC_ENDPOINT:http://localhost:9000}
+      access-key: ${MINIO_ACCESS_KEY:minioadmin}
+      secret-key: ${MINIO_SECRET_KEY:minioadmin}
+      bucket: ${MINIO_BUCKET:hope-sparks}
+      presigned-expiry-minutes: ${MINIO_PRESIGNED_EXPIRY_MINUTES:30}
+  ai:
+    chat:
+      provider: deepseek
+      base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+      api-key: ${DEEPSEEK_API_KEY:}
+      model: ${DEEPSEEK_MODEL:deepseek-chat}
+    embedding:
+      provider: dashscope
+      base-url: ${ALIYUN_DASHSCOPE_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+      api-key: ${ALIYUN_DASHSCOPE_API_KEY:}
+      model: ${ALIYUN_EMBEDDING_MODEL:text-embedding-v4}
+    rerank:
+      provider: dashscope
+      base-url: ${ALIYUN_RERANK_BASE_URL:https://dashscope.aliyuncs.com/api/v1}
+      api-key: ${ALIYUN_DASHSCOPE_API_KEY:}
+      model: ${ALIYUN_RERANK_MODEL:gte-rerank-v2}
+    search:
+      provider: ${SEARCH_PROVIDER:mock}
+      api-key: ${TAVILY_API_KEY:}
+      base-url: ${TAVILY_BASE_URL:https://api.tavily.com}
+      search-depth: ${TAVILY_SEARCH_DEPTH:basic}
+      max-results: ${TAVILY_MAX_RESULTS:5}
+    chroma:
+      enabled: ${CHROMA_ENABLED:true}
+      api-version: ${CHROMA_API_VERSION:v2}
+      base-url: ${CHROMA_BASE_URL:http://localhost:8000}
+      tenant-template: user_{userId}
+      database-template: project_{projectId}
+      local-cache-dir: ${KNOWLEDGE_CACHE_DIR:./target/knowledge-cache}
+    mermaid:
+      renderer: cli
+      output-dir: ${MERMAID_OUTPUT_DIR:./target/mermaid}
+    http:
+      connect-timeout-ms: ${AI_HTTP_CONNECT_TIMEOUT_MS:3000}
+      response-timeout-ms: ${AI_HTTP_RESPONSE_TIMEOUT_MS:60000}
+  kb:
+    parse:
+      pending-batch-size: ${KB_PENDING_BATCH_SIZE:10}
+    chunk:
+      max-characters: ${KB_CHUNK_MAX_CHARACTERS:1200}
+      overlap-characters: ${KB_CHUNK_OVERLAP_CHARACTERS:180}
+      semantic-threshold: ${KB_CHUNK_SEMANTIC_THRESHOLD:0.82}
+      enable-semantic: ${KB_CHUNK_ENABLE_SEMANTIC:true}
+    ocr:
+      enabled: ${KB_OCR_ENABLED:false}
+      command: ${KB_OCR_COMMAND:tesseract}
+      language: ${KB_OCR_LANGUAGE:chi_sim+eng}
   security:
     jwt:
       token-header: Authorization
@@ -52,3 +112,14 @@ springdoc:
     operations-sorter: method
   api-docs:
     path: /v3/api-docs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always

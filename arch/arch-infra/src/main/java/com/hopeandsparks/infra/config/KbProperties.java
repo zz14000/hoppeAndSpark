@@ -46,6 +46,10 @@ public class KbProperties {
         private int pendingBatchSize = 10;
         private String streamKey = "kb:ingest:stream";
         private String consumerGroup = "kb-ingest-group";
+        private String consumerName = "kb-consumer";
+        private long blockMs = 2000L;
+        private long claimIdleMs = 30000L;
+        private int readCount = 10;
 
         public int getPendingBatchSize() {
             return pendingBatchSize;
@@ -69,6 +73,38 @@ public class KbProperties {
 
         public void setConsumerGroup(String consumerGroup) {
             this.consumerGroup = consumerGroup;
+        }
+
+        public String getConsumerName() {
+            return consumerName;
+        }
+
+        public void setConsumerName(String consumerName) {
+            this.consumerName = consumerName;
+        }
+
+        public long getBlockMs() {
+            return blockMs;
+        }
+
+        public void setBlockMs(long blockMs) {
+            this.blockMs = blockMs;
+        }
+
+        public long getClaimIdleMs() {
+            return claimIdleMs;
+        }
+
+        public void setClaimIdleMs(long claimIdleMs) {
+            this.claimIdleMs = claimIdleMs;
+        }
+
+        public int getReadCount() {
+            return readCount;
+        }
+
+        public void setReadCount(int readCount) {
+            this.readCount = readCount;
         }
     }
 
@@ -115,6 +151,8 @@ public class KbProperties {
         private boolean enabled;
         private String command = "tesseract";
         private String language = "chi_sim+eng";
+        private boolean failOnEmpty;
+        private boolean applyOnPdfWhenTextEmpty;
 
         public boolean isEnabled() {
             return enabled;
@@ -138,6 +176,22 @@ public class KbProperties {
 
         public void setLanguage(String language) {
             this.language = language;
+        }
+
+        public boolean isFailOnEmpty() {
+            return failOnEmpty;
+        }
+
+        public void setFailOnEmpty(boolean failOnEmpty) {
+            this.failOnEmpty = failOnEmpty;
+        }
+
+        public boolean isApplyOnPdfWhenTextEmpty() {
+            return applyOnPdfWhenTextEmpty;
+        }
+
+        public void setApplyOnPdfWhenTextEmpty(boolean applyOnPdfWhenTextEmpty) {
+            this.applyOnPdfWhenTextEmpty = applyOnPdfWhenTextEmpty;
         }
     }
 

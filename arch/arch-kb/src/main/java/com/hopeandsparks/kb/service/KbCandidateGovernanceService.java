@@ -10,6 +10,8 @@ import java.util.Optional;
 
 public interface KbCandidateGovernanceService {
 
+    GovernanceResult governDocument(String documentId, String userId, String projectId, String collection);
+
     List<KbCandidateRecord> recordCandidates(String userId, String projectId, String query, List<WebSearchResult> results, Map<String, Double> rerankScores);
 
     PageResponse<KbCandidateRecord> listCandidates(Map<String, String> query);
