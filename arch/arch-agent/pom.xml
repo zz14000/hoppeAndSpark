@@ -30,5 +30,10 @@
             <artifactId>arch-task</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.hopeandsparks</groupId>
+            <artifactId>arch-kb</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 </project>

@@ -35,14 +35,38 @@
         <module>arch-im</module>
         <module>arch-notification</module>
         <module>arch-manage</module>
+        <module>arch-agent-harness</module>
         <module>arch-boot</module>
     </modules>
 
     <properties>
-        <java.version>17</java.version>
+        <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jjwt.version>0.12.6</jjwt.version>
         <springdoc.version>2.6.0</springdoc.version>
         <swagger-annotations.version>2.2.22</swagger-annotations.version>
+        <langchain4j.version>1.16.1</langchain4j.version>
+        <langgraph4j.version>1.8.17</langgraph4j.version>
+        <chromadb-java-client.version>0.1.7</chromadb-java-client.version>
+        <minio.version>8.5.17</minio.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>dev.langchain4j</groupId>
+                <artifactId>langchain4j-bom</artifactId>
+                <version>${langchain4j.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.bsc.langgraph4j</groupId>
+                <artifactId>langgraph4j-bom</artifactId>
+                <version>${langgraph4j.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 </project>

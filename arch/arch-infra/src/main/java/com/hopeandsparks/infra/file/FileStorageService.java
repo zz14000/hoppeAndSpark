@@ -13,4 +13,6 @@ public interface FileStorageService {
     StoredFileVO completeUpload(CompleteUploadRequest request);
 
     Optional<StoredFileVO> findByFileId(String fileId);
+
+    Optional<StoredFileObject> open(String fileId);
 }

@@ -1,8 +1,11 @@
 package com.hopeandsparks.task.service;
 
 import com.hopeandsparks.task.dto.CreateAsyncTaskCommand;
+import com.hopeandsparks.task.dto.RecordAsyncTaskEventCommand;
 import com.hopeandsparks.task.vo.AsyncTaskVO;
+import com.hopeandsparks.task.vo.AsyncTaskEventVO;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -12,6 +15,8 @@ import java.util.Optional;
 public interface AsyncTaskService {
 
     AsyncTaskVO create(CreateAsyncTaskCommand command);
+
+    AsyncTaskVO enqueue(String taskId, String message);
 
     Optional<AsyncTaskVO> findByTaskId(String taskId);
 
@@ -25,7 +30,17 @@ public interface AsyncTaskService {
 
     AsyncTaskVO increaseRetry(String taskId);
 
+    AsyncTaskVO markRetryWaiting(String taskId, String message);
+
+    AsyncTaskVO markRolledBack(String taskId, String message);
+
     AsyncTaskVO markSuccess(String taskId, String message);
 
     AsyncTaskVO markFailed(String taskId, String failureReason);
+
+    List<AsyncTaskVO> listByType(String taskType, int limit);
+
+    AsyncTaskEventVO recordEvent(RecordAsyncTaskEventCommand command);
+
+    List<AsyncTaskEventVO> listRecentEvents(String taskId, int limit);
 }

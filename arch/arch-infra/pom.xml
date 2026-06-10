@@ -12,7 +12,7 @@
 
     <artifactId>arch-infra</artifactId>
     <name>arch-infra</name>
-    <description>Infrastructure adapters for Redis Stream, MinIO, Chroma, Coze, and LLM providers.</description>
+    <description>Infrastructure adapters for Redis Stream, MinIO, Chroma, LangChain4j, LangGraph4j, and LLM providers.</description>
 
     <dependencies>
         <dependency>
@@ -33,6 +33,30 @@
             <artifactId>spring-security-crypto</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.18.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>${minio.version}</version>
+        </dependency>
+        <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
             <version>${jjwt.version}</version>
@@ -50,4 +74,29 @@
             <scope>runtime</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>ai-frameworks</id>
+            <dependencies>
+                <dependency>
+                    <groupId>dev.langchain4j</groupId>
+                    <artifactId>langchain4j</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>dev.langchain4j</groupId>
+                    <artifactId>langchain4j-open-ai</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>org.bsc.langgraph4j</groupId>
+                    <artifactId>langgraph4j-core</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>io.github.amikos-tech</groupId>
+                    <artifactId>chromadb-java-client</artifactId>
+                    <version>${chromadb-java-client.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 </project>
