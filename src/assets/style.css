@@ -1,0 +1,85 @@
+/* src/assets/style.css */
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-bg-hover: rgba(255, 255, 255, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --border-highlight: rgba(0, 0, 0, 0.1);
+  --text-main: #1D1D1F;
+  --text-sub: #636366;
+  --text-muted: #8E8E93;
+  
+  --accent: #0A84FF;
+  --c-ava: #FF375F;
+  --c-sage: #5E5CE6;
+  --c-coach: #BF5AF2;
+  --c-strict: #30D158;
+  --c-oldmoney: #FF9F0A;
+
+  --radius: 22px;
+  --blur: blur(40px);
+  --ease-apple: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* {
+  margin: 0; padding: 0; box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body, html {
+  width: 100vw; height: 100vh; overflow: hidden;
+  color: var(--text-main);
+  /* 幻彩晨曦流光背景 */
+  background: linear-gradient(-45deg, #F0F4FF, #FFEBF3, #E1F8ED, #F0E6FF, #F0F4FF);
+  background-size: 300% 300%;
+  animation: iridescentBreath 35s ease-in-out infinite;
+}
+
+@keyframes iridescentBreath {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* 全局应用容器 (复用率极高) */
+.app-container {
+  width: 96vw; height: 92vh; margin: 4vh auto;
+  background: var(--glass-bg);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--glass-border); border-radius: 40px;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.08);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* 白晶毛玻璃组件 */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  border-radius: 24px; transition: all 0.4s var(--ease-apple);
+}
+
+.glass-panel:hover {
+  border-color: var(--border-highlight);
+  background: var(--glass-bg-hover);
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.08);
+}
+
+/* 按钮通用 */
+.btn {
+  background: rgba(255,255,255,0.5); border: 1px solid rgba(0,0,0,0.05);
+  padding: 10px 24px; border-radius: 999px; color: var(--text-main);
+  cursor: pointer; transition: all 0.3s var(--ease-apple);
+  font-size: 14px; font-weight: 500; outline: none;
+}
+.btn:hover { background: #FFFFFF; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+.btn-primary { background: #1D1D1F; color: #FFFFFF; border: none; font-weight: 600; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
+.btn-primary:hover { background: #000000; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2); transform: translateY(-2px) scale(1.02); }
+
+/* 滚动条美化 */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }

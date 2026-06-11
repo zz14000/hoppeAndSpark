@@ -1,0 +1,21 @@
+{
+  "name": "hope-and-sparks",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "api:coverage": "node scripts/check-api-coverage.mjs"
+  },
+  "dependencies": {
+    "pinia": "^3.0.4",
+    "vue": "^3.5.32",
+    "vue-router": "^5.0.6"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.6",
+    "vite": "^8.0.10"
+  }
+}
