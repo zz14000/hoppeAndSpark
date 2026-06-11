@@ -12,4 +12,5 @@ export * from './chat.js';
 export * from './settings.js';
 export * from './upload.js';
 export * from './manage.js';
+export * from './kb.js';
 export { http, USE_MOCK } from './request.js';

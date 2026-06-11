@@ -24,25 +24,14 @@ export const manageUserAction = (userId, data) =>
 export const getManageUserLearningTrace = (userId) =>
   http.get(`/api/v1/manage/users/${userId}/learning-trace`);
 
-/** 知识库文档列表 */
-export const getManageKbDocuments = (params) =>
-  http.get('/api/v1/manage/knowledge-base/documents', params);
-
-/** 上传知识库文档 */
-export const uploadManageKbDocument = (data) =>
-  http.post('/api/v1/manage/knowledge-base/documents', data);
-
-/** 更新知识库文档 */
-export const updateManageKbDocument = (documentId, data) =>
-  http.put(`/api/v1/manage/knowledge-base/documents/${documentId}`, data);
-
-/** 删除知识库文档 */
-export const deleteManageKbDocument = (documentId) =>
-  http.delete(`/api/v1/manage/knowledge-base/documents/${documentId}`);
-
-/** 文档解析入库状态 */
-export const getManageKbParseStatus = (documentId) =>
-  http.get(`/api/v1/manage/knowledge-base/documents/${documentId}/parse-status`);
+/** @deprecated 请使用 kb.js 中的 getKbDocuments */
+export {
+  getKbDocuments as getManageKbDocuments,
+  createKbDocument as uploadManageKbDocument,
+  updateKbDocument as updateManageKbDocument,
+  deleteKbDocument as deleteManageKbDocument,
+  getKbParseStatus as getManageKbParseStatus,
+} from './kb.js';
 
 /** 争议内容工单列表 */
 export const getManageAiDisputes = (params) => http.get('/api/v1/manage/ai-disputes', params);

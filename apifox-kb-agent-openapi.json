@@ -1,0 +1,2734 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "HoppeAndSpark KB + Agent API",
+    "version": "2026-06-11",
+    "description": "基于当前代码真实实现整理的知识库与 Agent 接口清单，可直接导入 Apifox。范围包含上传、知识库文档管理、候选治理、评估/观测、Agent 会话与流式事件。"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "本地默认服务地址"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Upload",
+      "description": "全局上传入口"
+    },
+    {
+      "name": "Agent",
+      "description": "Agent 列表、会话、消息、SSE、争议上报"
+    },
+    {
+      "name": "KB Documents",
+      "description": "知识库文档与切块管理"
+    },
+    {
+      "name": "KB Governance",
+      "description": "知识库异步入库任务、候选治理、评估与仪表盘"
+    },
+    {
+      "name": "Agent Ops",
+      "description": "Agent 运行记录、事件、Checkpoint、恢复与回放"
+    }
+  ],
+  "paths": {
+    "/api/v1/uploads/token": {
+      "post": {
+        "tags": [
+          "Upload"
+        ],
+        "summary": "创建上传凭证",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadTokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "上传凭证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_UploadTokenVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/uploads/complete": {
+      "post": {
+        "tags": [
+          "Upload"
+        ],
+        "summary": "完成上传并登记文件",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteUploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "文件登记结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_StoredFileVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agents": {
+      "get": {
+        "tags": [
+          "Agent"
+        ],
+        "summary": "获取可用 Agent 列表",
+        "responses": {
+          "200": {
+            "description": "Agent 列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_AgentInfoList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agent-sessions": {
+      "post": {
+        "tags": [
+          "Agent"
+        ],
+        "summary": "创建 Agent 会话",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentSessionCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "会话创建结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_AgentSessionVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agent-sessions/{sessionId}/messages": {
+      "get": {
+        "tags": [
+          "Agent"
+        ],
+        "summary": "获取会话消息分页列表",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 30
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "消息分页",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Page_AgentMessageVO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Agent"
+        ],
+        "summary": "发送消息并触发 Agent 编排",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentMessageSendRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "发送结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_AgentMessageSendVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agent-sessions/{sessionId}/stream": {
+      "get": {
+        "tags": [
+          "Agent"
+        ],
+        "summary": "按 messageId 获取 SSE 流式事件",
+        "description": "响应为 text/event-stream。当前代码事件类型通常包含 plan、memory、retrieval、specialist、diagram、review、done、error。",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "messageId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSE 事件流",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "example": "event: retrieval\ndata: {\"content\":\"kb retrieved\",\"messageId\":\"msg_1\",\"payload\":{\"stage\":\"retrieval\"},\"stage\":\"retrieval\",\"mock\":false}\n\n"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai-disputes": {
+      "post": {
+        "tags": [
+          "Agent"
+        ],
+        "summary": "提交 AI 内容争议",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiDisputeCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "争议提交结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_AiDisputeVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/documents": {
+      "get": {
+        "tags": [
+          "KB Documents"
+        ],
+        "summary": "分页查询知识库文档",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "parseStatus",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "文档分页",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Page_KbDocumentVO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "KB Documents"
+        ],
+        "summary": "创建知识库文档",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KbDocumentCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "文档创建结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_KbDocumentWriteVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/documents/{documentId}": {
+      "put": {
+        "tags": [
+          "KB Documents"
+        ],
+        "summary": "更新知识库文档",
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KbDocumentUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "文档更新结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_KbDocumentWriteVO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "KB Documents"
+        ],
+        "summary": "删除知识库文档",
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "文档删除结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_KbDocumentWriteVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/documents/{documentId}/reparse": {
+      "post": {
+        "tags": [
+          "KB Documents"
+        ],
+        "summary": "触发文档重新解析",
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KbDocumentReparseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "重解析结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_KbDocumentWriteVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/documents/{documentId}/parse-status": {
+      "get": {
+        "tags": [
+          "KB Documents"
+        ],
+        "summary": "获取文档解析状态",
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "解析状态",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_KbParseStatusVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/documents/{documentId}/chunks": {
+      "get": {
+        "tags": [
+          "KB Documents"
+        ],
+        "summary": "获取文档切块分页列表",
+        "parameters": [
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "切块分页",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Page_KbChunkVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/ingest-jobs": {
+      "post": {
+        "tags": [
+          "KB Governance"
+        ],
+        "summary": "创建 KB 异步入库任务",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateKbIngestJobRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "入库任务创建结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_KbIngestJobVO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "KB Governance"
+        ],
+        "summary": "分页查询入库任务",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "入库任务分页",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Page_KbIngestJobVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/ingest-jobs/{taskId}": {
+      "get": {
+        "tags": [
+          "KB Governance"
+        ],
+        "summary": "获取单个入库任务",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "入库任务详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_KbIngestJobVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/ingest-jobs/{taskId}/retry": {
+      "post": {
+        "tags": [
+          "KB Governance"
+        ],
+        "summary": "重试入库任务",
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "重试结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_KbIngestJobVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/candidates": {
+      "get": {
+        "tags": [
+          "KB Governance"
+        ],
+        "summary": "分页查询候选治理记录",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          },
+          {
+            "name": "promotionStatus",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "projectId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sourceDomain",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "候选治理分页",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Page_KbCandidateVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/candidates/{candidateId}": {
+      "get": {
+        "tags": [
+          "KB Governance"
+        ],
+        "summary": "获取候选治理详情",
+        "parameters": [
+          {
+            "name": "candidateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "候选治理详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_KbCandidateVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/candidates/{candidateId}/approve": {
+      "post": {
+        "tags": [
+          "KB Governance"
+        ],
+        "summary": "人工批准候选内容",
+        "parameters": [
+          {
+            "name": "candidateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KbCandidateReviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "批准结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_KbCandidateVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/candidates/{candidateId}/reject": {
+      "post": {
+        "tags": [
+          "KB Governance"
+        ],
+        "summary": "驳回候选内容",
+        "parameters": [
+          {
+            "name": "candidateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KbCandidateReviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "驳回结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_KbCandidateVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/candidates/{candidateId}/rollback": {
+      "post": {
+        "tags": [
+          "KB Governance"
+        ],
+        "summary": "回滚已晋升候选内容",
+        "parameters": [
+          {
+            "name": "candidateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KbCandidateReviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "回滚结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_KbCandidateVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/candidates/{candidateId}/replay": {
+      "post": {
+        "tags": [
+          "KB Governance"
+        ],
+        "summary": "重放候选治理链路",
+        "parameters": [
+          {
+            "name": "candidateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "重放结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_KbCandidateVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/dashboard/overview": {
+      "get": {
+        "tags": [
+          "KB Governance"
+        ],
+        "summary": "知识库总览指标",
+        "responses": {
+          "200": {
+            "description": "总览指标",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_KbDashboardOverviewVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/dashboard/stages": {
+      "get": {
+        "tags": [
+          "KB Governance"
+        ],
+        "summary": "知识库阶段指标",
+        "responses": {
+          "200": {
+            "description": "阶段指标",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_KbStageMetricList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/dashboard/failures": {
+      "get": {
+        "tags": [
+          "KB Governance"
+        ],
+        "summary": "查询失败事件分页",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "失败事件分页",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Page_GenericMap"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/dashboard/candidates": {
+      "get": {
+        "tags": [
+          "KB Governance"
+        ],
+        "summary": "候选治理指标分页",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          },
+          {
+            "name": "promotionStatus",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "documentId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "projectId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sourceDomain",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "候选治理分页",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Page_KbCandidateVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/dashboard/quality": {
+      "get": {
+        "tags": [
+          "KB Governance"
+        ],
+        "summary": "知识库质量指标",
+        "responses": {
+          "200": {
+            "description": "质量指标",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_KbQualityMetricVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/evaluations/runs": {
+      "post": {
+        "tags": [
+          "KB Governance"
+        ],
+        "summary": "创建离线评估运行",
+        "responses": {
+          "200": {
+            "description": "评估运行结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_KbEvaluationRunVO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "KB Governance"
+        ],
+        "summary": "分页查询评估运行",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "评估运行分页",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Page_KbEvaluationRunVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/evaluations/runs/{runId}": {
+      "get": {
+        "tags": [
+          "KB Governance"
+        ],
+        "summary": "获取单个评估运行",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "评估运行详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_KbEvaluationRunVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/agent-runs": {
+      "get": {
+        "tags": [
+          "Agent Ops"
+        ],
+        "summary": "分页查询 Agent 运行记录",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agent 运行分页",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Page_AgentRunVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/agent-runs/{runId}": {
+      "get": {
+        "tags": [
+          "Agent Ops"
+        ],
+        "summary": "获取单个 Agent Run",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agent Run 详情",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_AgentRunVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/agent-runs/{runId}/events": {
+      "get": {
+        "tags": [
+          "Agent Ops"
+        ],
+        "summary": "分页查询 Agent Run 事件",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agent Run 事件分页",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Page_GenericMap"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/agent-runs/{runId}/checkpoints": {
+      "get": {
+        "tags": [
+          "Agent Ops"
+        ],
+        "summary": "分页查询 Agent Run Checkpoint",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Checkpoint 分页",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_Page_GenericMap"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/agent-runs/{runId}/resume": {
+      "post": {
+        "tags": [
+          "Agent Ops"
+        ],
+        "summary": "从最近或指定 Checkpoint 恢复 Agent Run",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentRunResumeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "恢复结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_AgentRunVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/manage/knowledge-base/agent-runs/{runId}/replay": {
+      "post": {
+        "tags": [
+          "Agent Ops"
+        ],
+        "summary": "重放 Agent Run",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "重放结果",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse_AgentRunVO"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiResponseBase": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 200
+          },
+          "message": {
+            "type": "string",
+            "example": "success"
+          },
+          "requestId": {
+            "type": "string",
+            "example": "req_20260611_001"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "requestId"
+        ]
+      },
+      "PageResponse_AgentMessageVO": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer"
+          },
+          "pageSize": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "list": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentMessageVO"
+            }
+          }
+        }
+      },
+      "PageResponse_KbDocumentVO": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer"
+          },
+          "pageSize": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "list": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KbDocumentVO"
+            }
+          }
+        }
+      },
+      "PageResponse_KbChunkVO": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer"
+          },
+          "pageSize": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "list": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KbChunkVO"
+            }
+          }
+        }
+      },
+      "PageResponse_KbIngestJobVO": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer"
+          },
+          "pageSize": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "list": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KbIngestJobVO"
+            }
+          }
+        }
+      },
+      "PageResponse_KbCandidateVO": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer"
+          },
+          "pageSize": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "list": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KbCandidateVO"
+            }
+          }
+        }
+      },
+      "PageResponse_KbEvaluationRunVO": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer"
+          },
+          "pageSize": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "list": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KbEvaluationRunVO"
+            }
+          }
+        }
+      },
+      "PageResponse_AgentRunVO": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer"
+          },
+          "pageSize": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "list": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentRunVO"
+            }
+          }
+        }
+      },
+      "PageResponse_GenericMap": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer"
+          },
+          "pageSize": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "list": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "ApiResponse_UploadTokenVO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/UploadTokenVO"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_StoredFileVO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/StoredFileVO"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_AgentInfoList": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AgentInfoVO"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_AgentSessionVO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/AgentSessionVO"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_Page_AgentMessageVO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/PageResponse_AgentMessageVO"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_AgentMessageSendVO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/AgentMessageSendVO"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_AiDisputeVO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/AiDisputeVO"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_Page_KbDocumentVO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/PageResponse_KbDocumentVO"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_KbDocumentWriteVO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/KbDocumentWriteVO"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_KbParseStatusVO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/KbParseStatusVO"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_Page_KbChunkVO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/PageResponse_KbChunkVO"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_KbIngestJobVO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/KbIngestJobVO"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_Page_KbIngestJobVO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/PageResponse_KbIngestJobVO"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_KbCandidateVO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/KbCandidateVO"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_Page_KbCandidateVO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/PageResponse_KbCandidateVO"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_KbDashboardOverviewVO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/KbDashboardOverviewVO"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_KbStageMetricList": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KbStageMetricVO"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_Page_GenericMap": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/PageResponse_GenericMap"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_KbQualityMetricVO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/KbQualityMetricVO"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_KbEvaluationRunVO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/KbEvaluationRunVO"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_Page_KbEvaluationRunVO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/PageResponse_KbEvaluationRunVO"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_AgentRunVO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/AgentRunVO"
+              }
+            }
+          }
+        ]
+      },
+      "ApiResponse_Page_AgentRunVO": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiResponseBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/PageResponse_AgentRunVO"
+              }
+            }
+          }
+        ]
+      },
+      "UploadTokenRequest": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string"
+          },
+          "fileType": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bizType": {
+            "type": "string"
+          }
+        }
+      },
+      "UploadTokenVO": {
+        "type": "object",
+        "properties": {
+          "fileId": {
+            "type": "string"
+          },
+          "uploadUrl": {
+            "type": "string"
+          },
+          "objectKey": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "mock": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CompleteUploadRequest": {
+        "type": "object",
+        "properties": {
+          "fileId": {
+            "type": "string"
+          },
+          "fileHash": {
+            "type": "string"
+          },
+          "objectKey": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "fileType": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "StoredFileVO": {
+        "type": "object",
+        "properties": {
+          "fileId": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "fileType": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "objectKey": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "mock": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AgentInfoVO": {
+        "type": "object",
+        "properties": {
+          "agentKey": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "mock": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AgentSessionCreateRequest": {
+        "type": "object",
+        "properties": {
+          "agentKey": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "courseId": {
+            "type": "string"
+          },
+          "courseName": {
+            "type": "string"
+          }
+        }
+      },
+      "AgentSessionVO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "agentKey": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "courseId": {
+            "type": "string"
+          },
+          "courseName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "mock": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AgentMessageVO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "mock": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AgentMessageSendRequest": {
+        "type": "object",
+        "required": [
+          "content"
+        ],
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "agentMode": {
+            "type": "string"
+          },
+          "outputPreference": {
+            "type": "string"
+          },
+          "courseId": {
+            "type": "string"
+          },
+          "knowledgePointIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowWebSearch": {
+            "type": "boolean"
+          },
+          "strictnessLevel": {
+            "type": "string"
+          },
+          "renderMermaid": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AgentMessageSendVO": {
+        "type": "object",
+        "properties": {
+          "messageId": {
+            "type": "string"
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "finalAnswer": {
+            "type": "string"
+          },
+          "diagramScript": {
+            "type": "string"
+          },
+          "diagramImagePath": {
+            "type": "string"
+          },
+          "runId": {
+            "type": "string"
+          },
+          "mock": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AiDisputeCreateRequest": {
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "messageId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      },
+      "AiDisputeVO": {
+        "type": "object",
+        "properties": {
+          "disputeId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "mock": {
+            "type": "boolean"
+          }
+        }
+      },
+      "KbDocumentCreateRequest": {
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "fileId": {
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string"
+          },
+          "contentText": {
+            "type": "string"
+          },
+          "collection": {
+            "type": "string"
+          },
+          "parseNow": {
+            "type": "boolean"
+          }
+        }
+      },
+      "KbDocumentUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string"
+          },
+          "contentText": {
+            "type": "string"
+          },
+          "collection": {
+            "type": "string"
+          },
+          "reparse": {
+            "type": "boolean"
+          }
+        }
+      },
+      "KbDocumentReparseRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "KbDocumentVO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string"
+          },
+          "fileId": {
+            "type": "string"
+          },
+          "collection": {
+            "type": "string"
+          },
+          "parseStatus": {
+            "type": "string"
+          },
+          "mock": {
+            "type": "boolean"
+          }
+        }
+      },
+      "KbDocumentWriteVO": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/KbDocumentVO"
+          },
+          "message": {
+            "type": "string"
+          },
+          "mock": {
+            "type": "boolean"
+          }
+        }
+      },
+      "KbParseStatusVO": {
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "string"
+          },
+          "parseStatus": {
+            "type": "string"
+          },
+          "progress": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "mock": {
+            "type": "boolean"
+          }
+        }
+      },
+      "KbChunkVO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": "string"
+          },
+          "chunkIndex": {
+            "type": "integer"
+          },
+          "contentText": {
+            "type": "string"
+          },
+          "chromaPointId": {
+            "type": "string"
+          },
+          "sectionPath": {
+            "type": "string"
+          },
+          "mock": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateKbIngestJobRequest": {
+        "type": "object",
+        "required": [
+          "fileId",
+          "title",
+          "domain",
+          "projectId"
+        ],
+        "properties": {
+          "fileId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "collection": {
+            "type": "string",
+            "default": "edu_ground_truth"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "parseStrategy": {
+            "type": "string",
+            "default": "default"
+          },
+          "parseNow": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "KbIngestJobVO": {
+        "type": "object",
+        "properties": {
+          "taskId": {
+            "type": "string"
+          },
+          "taskType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "progress": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "retryCount": {
+            "type": "integer"
+          },
+          "maxRetry": {
+            "type": "integer"
+          },
+          "documentId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          }
+        }
+      },
+      "KbCandidateReviewRequest": {
+        "type": "object",
+        "properties": {
+          "comment": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "KbCandidateVO": {
+        "type": "object",
+        "properties": {
+          "candidateId": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": "string"
+          },
+          "tenantUserId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string"
+          },
+          "sourceDomain": {
+            "type": "string"
+          },
+          "sourceTitle": {
+            "type": "string"
+          },
+          "rerankScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "retrievalScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "contentLength": {
+            "type": "integer"
+          },
+          "governanceStatus": {
+            "type": "string"
+          },
+          "promotionStatus": {
+            "type": "string"
+          },
+          "promotionReason": {
+            "type": "string"
+          },
+          "approvedDocumentId": {
+            "type": "string"
+          }
+        }
+      },
+      "KbDashboardOverviewVO": {
+        "type": "object",
+        "properties": {
+          "totalDocuments": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "successRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "failedRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "retryRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "queueBacklog": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "autoPromotionRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "rollbackRate": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "KbStageMetricVO": {
+        "type": "object",
+        "properties": {
+          "stage": {
+            "type": "string"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "successRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "failedRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "p50DurationMs": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "p95DurationMs": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "KbQualityMetricVO": {
+        "type": "object",
+        "properties": {
+          "ocrHitRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "avgChunkCount": {
+            "type": "number",
+            "format": "double"
+          },
+          "avgChunkLength": {
+            "type": "number",
+            "format": "double"
+          },
+          "embeddingFailureRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "chromaFailureRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "autoPromotionPrecision": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "KbEvaluationRunVO": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "recallAt5": {
+            "type": "number",
+            "format": "double"
+          },
+          "mrrAt10": {
+            "type": "number",
+            "format": "double"
+          },
+          "parseCoverageRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "ocrSuccessRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "autoPromotionPrecision": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "AgentRunResumeRequest": {
+        "type": "object",
+        "properties": {
+          "checkpointId": {
+            "type": "string"
+          }
+        }
+      },
+      "AgentRunVO": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string"
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "runtime": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "currentNode": {
+            "type": "string"
+          },
+          "currentRevision": {
+            "type": "integer"
+          },
+          "maxRevision": {
+            "type": "integer"
+          },
+          "errorCode": {
+            "type": "string"
+          },
+          "errorMessage": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "summary": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  }
+}

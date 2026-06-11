@@ -1,177 +1,16 @@
 {
-  "generatedAt": "2026-06-11T07:18:24.249Z",
-  "total": 118,
-  "implemented": 118,
+  "generatedAt": "2026-06-11T09:25:49.116Z",
+  "total": 144,
+  "implemented": 144,
   "missing": 0,
   "coverage": "100.0%",
   "endpoints": [
     {
       "method": "POST",
-      "path": "/api/v1/auth/register",
-      "summary": "注册",
-      "tag": "用户与认证",
-      "status": "✅ 已实现",
-      "module": "auth",
-      "file": "src/api/auth.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/auth/login",
-      "summary": "登录",
-      "tag": "用户与认证",
-      "status": "✅ 已实现",
-      "module": "auth",
-      "file": "src/api/auth.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/auth/refresh",
-      "summary": "刷新 token",
-      "tag": "用户与认证",
-      "status": "✅ 已实现",
-      "module": "auth",
-      "file": "src/api/auth.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/auth/logout",
-      "summary": "退出登录",
-      "tag": "用户与认证",
-      "status": "✅ 已实现",
-      "module": "auth",
-      "file": "src/api/auth.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/auth/password/reset-request",
-      "summary": "找回密码",
-      "tag": "用户与认证",
-      "status": "✅ 已实现",
-      "module": "auth",
-      "file": "src/api/auth.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/auth/password/reset-confirm",
-      "summary": "重置密码",
-      "tag": "用户与认证",
-      "status": "✅ 已实现",
-      "module": "auth",
-      "file": "src/api/auth.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/onboarding/questions",
-      "summary": "获取画像引导问题",
-      "tag": "Spark画像与首次引导",
-      "status": "✅ 已实现",
-      "module": "onboarding",
-      "file": "src/api/onboarding.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/onboarding/answers",
-      "summary": "提交单轮画像回答",
-      "tag": "Spark画像与首次引导",
-      "status": "✅ 已实现",
-      "module": "onboarding",
-      "file": "src/api/onboarding.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/onboarding/complete",
-      "summary": "生成 Spark 画像",
-      "tag": "Spark画像与首次引导",
-      "status": "✅ 已实现",
-      "module": "onboarding",
-      "file": "src/api/onboarding.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/spark-profile/rebuild",
-      "summary": "重新构建画像",
-      "tag": "Spark画像与首次引导",
-      "status": "✅ 已实现",
-      "module": "onboarding",
-      "file": "src/api/onboarding.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/user/current",
-      "summary": "获取当前用户",
-      "tag": "用户资料与个人中心",
-      "status": "✅ 已实现",
-      "module": "user",
-      "file": "src/api/user.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/users/{userId}",
-      "summary": "获取指定用户主页",
-      "tag": "用户资料与个人中心",
-      "status": "✅ 已实现",
-      "module": "user",
-      "file": "src/api/user.js"
-    },
-    {
-      "method": "PUT",
-      "path": "/api/v1/user/profile",
-      "summary": "更新个人资料",
-      "tag": "用户资料与个人中心",
-      "status": "✅ 已实现",
-      "module": "user",
-      "file": "src/api/user.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/user/learning-stats",
-      "summary": "获取学习数据统计",
-      "tag": "用户资料与个人中心",
-      "status": "✅ 已实现",
-      "module": "user",
-      "file": "src/api/user.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/user/collections",
-      "summary": "获取我的收藏",
-      "tag": "用户资料与个人中心",
-      "status": "✅ 已实现",
-      "module": "user",
-      "file": "src/api/user.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/user/collections",
-      "summary": "收藏或取消收藏",
-      "tag": "用户资料与个人中心",
-      "status": "✅ 已实现",
-      "module": "user",
-      "file": "src/api/user.js"
-    },
-    {
-      "method": "DELETE",
-      "path": "/api/v1/user/collections/{collectionId}",
-      "summary": "删除收藏",
-      "tag": "用户资料与个人中心",
-      "status": "✅ 已实现",
-      "module": "user",
-      "file": "src/api/user.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/agents",
-      "summary": "获取智能体列表",
-      "tag": "Agent智能体",
-      "status": "✅ 已实现",
-      "module": "agent",
-      "file": "src/api/agent.js"
-    },
-    {
-      "method": "POST",
       "path": "/api/v1/agent-sessions",
-      "summary": "创建对话会话",
-      "tag": "Agent智能体",
+      "summary": "创建 Agent 会话",
+      "tag": "Agent",
+      "source": "main+kb-agent",
       "status": "✅ 已实现",
       "module": "agent",
       "file": "src/api/agent.js"
@@ -179,8 +18,9 @@
     {
       "method": "GET",
       "path": "/api/v1/agent-sessions/{sessionId}/messages",
-      "summary": "获取会话历史",
-      "tag": "Agent智能体",
+      "summary": "获取会话消息分页列表",
+      "tag": "Agent",
+      "source": "main+kb-agent",
       "status": "✅ 已实现",
       "module": "agent",
       "file": "src/api/agent.js"
@@ -188,8 +28,9 @@
     {
       "method": "POST",
       "path": "/api/v1/agent-sessions/{sessionId}/messages",
-      "summary": "发送消息给智能体",
-      "tag": "Agent智能体",
+      "summary": "发送消息并触发 Agent 编排",
+      "tag": "Agent",
+      "source": "main+kb-agent",
       "status": "✅ 已实现",
       "module": "agent",
       "file": "src/api/agent.js"
@@ -197,8 +38,19 @@
     {
       "method": "GET",
       "path": "/api/v1/agent-sessions/{sessionId}/stream",
-      "summary": "Agent 流式响应",
-      "tag": "Agent智能体",
+      "summary": "按 messageId 获取 SSE 流式事件",
+      "tag": "Agent",
+      "source": "main+kb-agent",
+      "status": "✅ 已实现",
+      "module": "agent",
+      "file": "src/api/agent.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/agents",
+      "summary": "获取可用 Agent 列表",
+      "tag": "Agent",
+      "source": "main+kb-agent",
       "status": "✅ 已实现",
       "module": "agent",
       "file": "src/api/agent.js"
@@ -206,377 +58,19 @@
     {
       "method": "POST",
       "path": "/api/v1/ai-disputes",
-      "summary": "举报 AI 内容争议",
-      "tag": "Agent智能体",
+      "summary": "提交 AI 内容争议",
+      "tag": "Agent",
+      "source": "main+kb-agent",
       "status": "✅ 已实现",
       "module": "agent",
       "file": "src/api/agent.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/explore",
-      "summary": "调用 Nebula 全局探索",
-      "tag": "Nebula探索与资源生成",
-      "status": "✅ 已实现",
-      "module": "system",
-      "file": "src/api/system.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/explore/{exploreId}",
-      "summary": "获取探索详情",
-      "tag": "Nebula探索与资源生成",
-      "status": "✅ 已实现",
-      "module": "system",
-      "file": "src/api/system.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/explore/{exploreId}/mindmap",
-      "summary": "生成思维导图",
-      "tag": "Nebula探索与资源生成",
-      "status": "✅ 已实现",
-      "module": "system",
-      "file": "src/api/system.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/knowledge-graph",
-      "summary": "获取知识关联图谱",
-      "tag": "Nebula探索与资源生成",
-      "status": "✅ 已实现",
-      "module": "system",
-      "file": "src/api/system.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/resources",
-      "summary": "获取资源列表",
-      "tag": "学习资源库",
-      "status": "✅ 已实现",
-      "module": "resource",
-      "file": "src/api/resource.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/resources/{resourceId}",
-      "summary": "获取资源详情",
-      "tag": "学习资源库",
-      "status": "✅ 已实现",
-      "module": "resource",
-      "file": "src/api/resource.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/readings/{readingId}",
-      "summary": "获取拓展阅读详情",
-      "tag": "学习资源库",
-      "status": "✅ 已实现",
-      "module": "resource",
-      "file": "src/api/resource.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/code-cases/{caseId}",
-      "summary": "获取代码案例详情",
-      "tag": "学习资源库",
-      "status": "✅ 已实现",
-      "module": "resource",
-      "file": "src/api/resource.js"
-    },
-    {
-      "method": "PUT",
-      "path": "/api/v1/resources/{resourceId}/progress",
-      "summary": "更新资源学习进度",
-      "tag": "学习资源库",
-      "status": "✅ 已实现",
-      "module": "resource",
-      "file": "src/api/resource.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/resources/{resourceId}/export",
-      "summary": "导出资源",
-      "tag": "学习资源库",
-      "status": "✅ 已实现",
-      "module": "resource",
-      "file": "src/api/resource.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/resources/{resourceId}/feedback",
-      "summary": "对资源进行质量反馈",
-      "tag": "学习资源库",
-      "status": "✅ 已实现",
-      "module": "resource",
-      "file": "src/api/resource.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/videos/{videoId}",
-      "summary": "获取视频详情",
-      "tag": "视频学习",
-      "status": "✅ 已实现",
-      "module": "resource",
-      "file": "src/api/resource.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/videos/{videoId}/episodes",
-      "summary": "获取视频选集",
-      "tag": "视频学习",
-      "status": "✅ 已实现",
-      "module": "resource",
-      "file": "src/api/resource.js"
-    },
-    {
-      "method": "PUT",
-      "path": "/api/v1/videos/{videoId}/watch-progress",
-      "summary": "上报播放进度",
-      "tag": "视频学习",
-      "status": "✅ 已实现",
-      "module": "resource",
-      "file": "src/api/resource.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/videos/{videoId}/transcripts",
-      "summary": "获取视频字幕与 AI 提示",
-      "tag": "视频学习",
-      "status": "✅ 已实现",
-      "module": "resource",
-      "file": "src/api/resource.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/documents/{documentId}",
-      "summary": "获取文档详情",
-      "tag": "文档阅读",
-      "status": "✅ 已实现",
-      "module": "resource",
-      "file": "src/api/resource.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/documents/{documentId}/outline",
-      "summary": "获取文档目录",
-      "tag": "文档阅读",
-      "status": "✅ 已实现",
-      "module": "resource",
-      "file": "src/api/resource.js"
-    },
-    {
-      "method": "PUT",
-      "path": "/api/v1/documents/{documentId}/reading-progress",
-      "summary": "更新阅读进度",
-      "tag": "文档阅读",
-      "status": "✅ 已实现",
-      "module": "resource",
-      "file": "src/api/resource.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/documents/{documentId}/ask",
-      "summary": "Sage 伴读提问",
-      "tag": "文档阅读",
-      "status": "✅ 已实现",
-      "module": "resource",
-      "file": "src/api/resource.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/learning-plans/current",
-      "summary": "获取学习计划",
-      "tag": "学习计划日历与拓扑",
-      "status": "✅ 已实现",
-      "module": "learning",
-      "file": "src/api/learning.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/learning-plans/generate",
-      "summary": "Strict 生成学习计划",
-      "tag": "学习计划日历与拓扑",
-      "status": "✅ 已实现",
-      "module": "learning",
-      "file": "src/api/learning.js"
-    },
-    {
-      "method": "PUT",
-      "path": "/api/v1/learning-plans/{planId}/adjust",
-      "summary": "调整学习计划",
-      "tag": "学习计划日历与拓扑",
-      "status": "✅ 已实现",
-      "module": "learning",
-      "file": "src/api/learning.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/learning-plans/{planId}/topology",
-      "summary": "获取学习拓扑",
-      "tag": "学习计划日历与拓扑",
-      "status": "✅ 已实现",
-      "module": "learning",
-      "file": "src/api/learning.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/learning-plans/{planId}/topology/nodes/{nodeId}/resource-network",
-      "summary": "获取知识点资源网络图",
-      "tag": "学习计划日历与拓扑",
-      "status": "✅ 已实现",
-      "module": "learning",
-      "file": "src/api/learning.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/learning-plans/{planId}/topology/nodes/{nodeId}/resources",
-      "summary": "获取知识点资源网络图列表视图",
-      "tag": "学习计划日历与拓扑",
-      "status": "✅ 已实现",
-      "module": "learning",
-      "file": "src/api/learning.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/calendar/events",
-      "summary": "获取日历事件",
-      "tag": "学习计划日历与拓扑",
-      "status": "✅ 已实现",
-      "module": "system",
-      "file": "src/api/system.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/calendar/events",
-      "summary": "新建日程",
-      "tag": "学习计划日历与拓扑",
-      "status": "✅ 已实现",
-      "module": "system",
-      "file": "src/api/system.js"
-    },
-    {
-      "method": "PUT",
-      "path": "/api/v1/calendar/events/{eventId}",
-      "summary": "更新日程",
-      "tag": "学习计划日历与拓扑",
-      "status": "✅ 已实现",
-      "module": "system",
-      "file": "src/api/system.js"
-    },
-    {
-      "method": "DELETE",
-      "path": "/api/v1/calendar/events/{eventId}",
-      "summary": "删除日程",
-      "tag": "学习计划日历与拓扑",
-      "status": "✅ 已实现",
-      "module": "system",
-      "file": "src/api/system.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/skill-tree",
-      "summary": "获取技能树",
-      "tag": "技能树",
-      "status": "✅ 已实现",
-      "module": "learning",
-      "file": "src/api/learning.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/skill-tree/nodes/{nodeId}/light-up",
-      "summary": "点亮技能节点",
-      "tag": "技能树",
-      "status": "✅ 已实现",
-      "module": "learning",
-      "file": "src/api/learning.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/exercise-sets",
-      "summary": "获取练习/测试列表",
-      "tag": "练习与测试",
-      "status": "✅ 已实现",
-      "module": "exercise",
-      "file": "src/api/exercise.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/exercise-sets/{exerciseSetId}",
-      "summary": "获取练习/测试详情",
-      "tag": "练习与测试",
-      "status": "✅ 已实现",
-      "module": "exercise",
-      "file": "src/api/exercise.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/exercise-sets/{exerciseSetId}/questions/{questionId}",
-      "summary": "获取单题答题详情",
-      "tag": "练习与测试",
-      "status": "✅ 已实现",
-      "module": "exercise",
-      "file": "src/api/exercise.js"
-    },
-    {
-      "method": "PUT",
-      "path": "/api/v1/exercise-sets/{exerciseSetId}/questions/{questionId}/answer",
-      "summary": "保存单题答案",
-      "tag": "练习与测试",
-      "status": "✅ 已实现",
-      "module": "exercise",
-      "file": "src/api/exercise.js"
-    },
-    {
-      "method": "PUT",
-      "path": "/api/v1/exercise-sets/{exerciseSetId}/questions/{questionId}/flag",
-      "summary": "标记或取消标记题目",
-      "tag": "练习与测试",
-      "status": "✅ 已实现",
-      "module": "exercise",
-      "file": "src/api/exercise.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/exercise-sets/{exerciseSetId}/questions/{questionId}/hint",
-      "summary": "请求 Coach 提示",
-      "tag": "练习与测试",
-      "status": "✅ 已实现",
-      "module": "exercise",
-      "file": "src/api/exercise.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/exercise-sets/{exerciseSetId}/submit",
-      "summary": "提交练习/测试",
-      "tag": "练习与测试",
-      "status": "✅ 已实现",
-      "module": "exercise",
-      "file": "src/api/exercise.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/exercise-sets/{exerciseSetId}/questions/{questionId}/code-run",
-      "summary": "提交代码题即时评测",
-      "tag": "练习与测试",
-      "status": "✅ 已实现",
-      "module": "exercise",
-      "file": "src/api/exercise.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/exercise-sets/attempts/{attemptId}/report",
-      "summary": "获取练习/测试报告",
-      "tag": "练习与测试",
-      "status": "✅ 已实现",
-      "module": "exercise",
-      "file": "src/api/exercise.js"
     },
     {
       "method": "GET",
       "path": "/api/v1/articles",
       "summary": "获取文章列表",
       "tag": "社区与文章",
+      "source": "main",
       "status": "✅ 已实现",
       "module": "article",
       "file": "src/api/article.js"
@@ -586,6 +80,7 @@
       "path": "/api/v1/articles",
       "summary": "发布文章",
       "tag": "社区与文章",
+      "source": "main",
       "status": "✅ 已实现",
       "module": "article",
       "file": "src/api/article.js"
@@ -595,51 +90,7 @@
       "path": "/api/v1/articles/{articleId}",
       "summary": "获取文章详情",
       "tag": "社区与文章",
-      "status": "✅ 已实现",
-      "module": "article",
-      "file": "src/api/article.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/articles/drafts",
-      "summary": "保存草稿",
-      "tag": "社区与文章",
-      "status": "✅ 已实现",
-      "module": "article",
-      "file": "src/api/article.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/articles/polish",
-      "summary": "Horizon 文章润色",
-      "tag": "社区与文章",
-      "status": "✅ 已实现",
-      "module": "article",
-      "file": "src/api/article.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/articles/{articleId}/like",
-      "summary": "点赞文章",
-      "tag": "社区与文章",
-      "status": "✅ 已实现",
-      "module": "article",
-      "file": "src/api/article.js"
-    },
-    {
-      "method": "DELETE",
-      "path": "/api/v1/articles/{articleId}/like",
-      "summary": "取消点赞文章",
-      "tag": "社区与文章",
-      "status": "✅ 已实现",
-      "module": "article",
-      "file": "src/api/article.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/articles/{articleId}/collect",
-      "summary": "收藏文章",
-      "tag": "社区与文章",
+      "source": "main",
       "status": "✅ 已实现",
       "module": "article",
       "file": "src/api/article.js"
@@ -649,33 +100,27 @@
       "path": "/api/v1/articles/{articleId}/collect",
       "summary": "取消收藏文章",
       "tag": "社区与文章",
+      "source": "main",
       "status": "✅ 已实现",
       "module": "article",
       "file": "src/api/article.js"
     },
     {
       "method": "POST",
-      "path": "/api/v1/users/{userId}/follow",
-      "summary": "关注用户",
+      "path": "/api/v1/articles/{articleId}/collect",
+      "summary": "收藏文章",
       "tag": "社区与文章",
+      "source": "main",
       "status": "✅ 已实现",
-      "module": "user",
-      "file": "src/api/user.js"
-    },
-    {
-      "method": "DELETE",
-      "path": "/api/v1/users/{userId}/follow",
-      "summary": "取消关注用户",
-      "tag": "社区与文章",
-      "status": "✅ 已实现",
-      "module": "user",
-      "file": "src/api/user.js"
+      "module": "article",
+      "file": "src/api/article.js"
     },
     {
       "method": "GET",
       "path": "/api/v1/articles/{articleId}/comments",
       "summary": "获取评论",
       "tag": "社区与文章",
+      "source": "main",
       "status": "✅ 已实现",
       "module": "article",
       "file": "src/api/article.js"
@@ -685,15 +130,157 @@
       "path": "/api/v1/articles/{articleId}/comments",
       "summary": "发布评论",
       "tag": "社区与文章",
+      "source": "main",
       "status": "✅ 已实现",
       "module": "article",
       "file": "src/api/article.js"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/articles/{articleId}/like",
+      "summary": "取消点赞文章",
+      "tag": "社区与文章",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "article",
+      "file": "src/api/article.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/articles/{articleId}/like",
+      "summary": "点赞文章",
+      "tag": "社区与文章",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "article",
+      "file": "src/api/article.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/articles/drafts",
+      "summary": "保存草稿",
+      "tag": "社区与文章",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "article",
+      "file": "src/api/article.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/articles/polish",
+      "summary": "Horizon 文章润色",
+      "tag": "社区与文章",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "article",
+      "file": "src/api/article.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "summary": "登录",
+      "tag": "用户与认证",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "auth",
+      "file": "src/api/auth.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/logout",
+      "summary": "退出登录",
+      "tag": "用户与认证",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "auth",
+      "file": "src/api/auth.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/password/reset-confirm",
+      "summary": "重置密码",
+      "tag": "用户与认证",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "auth",
+      "file": "src/api/auth.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/password/reset-request",
+      "summary": "找回密码",
+      "tag": "用户与认证",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "auth",
+      "file": "src/api/auth.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/refresh",
+      "summary": "刷新 token",
+      "tag": "用户与认证",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "auth",
+      "file": "src/api/auth.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/register",
+      "summary": "注册",
+      "tag": "用户与认证",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "auth",
+      "file": "src/api/auth.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/calendar/events",
+      "summary": "获取日历事件",
+      "tag": "学习计划日历与拓扑",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "system",
+      "file": "src/api/system.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/calendar/events",
+      "summary": "新建日程",
+      "tag": "学习计划日历与拓扑",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "system",
+      "file": "src/api/system.js"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/calendar/events/{eventId}",
+      "summary": "删除日程",
+      "tag": "学习计划日历与拓扑",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "system",
+      "file": "src/api/system.js"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/calendar/events/{eventId}",
+      "summary": "更新日程",
+      "tag": "学习计划日历与拓扑",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "system",
+      "file": "src/api/system.js"
     },
     {
       "method": "GET",
       "path": "/api/v1/chats",
       "summary": "获取会话列表",
       "tag": "消息私信与群聊",
+      "source": "main",
       "status": "✅ 已实现",
       "module": "chat",
       "file": "src/api/chat.js"
@@ -703,6 +290,7 @@
       "path": "/api/v1/chats/{chatId}/messages",
       "summary": "获取聊天记录",
       "tag": "消息私信与群聊",
+      "source": "main",
       "status": "✅ 已实现",
       "module": "chat",
       "file": "src/api/chat.js"
@@ -712,15 +300,7 @@
       "path": "/api/v1/chats/{chatId}/messages",
       "summary": "发送消息",
       "tag": "消息私信与群聊",
-      "status": "✅ 已实现",
-      "module": "chat",
-      "file": "src/api/chat.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/chats/private",
-      "summary": "创建私聊",
-      "tag": "消息私信与群聊",
+      "source": "main",
       "status": "✅ 已实现",
       "module": "chat",
       "file": "src/api/chat.js"
@@ -730,15 +310,197 @@
       "path": "/api/v1/chats/groups",
       "summary": "创建群聊",
       "tag": "消息私信与群聊",
+      "source": "main",
       "status": "✅ 已实现",
       "module": "chat",
       "file": "src/api/chat.js"
     },
     {
       "method": "POST",
+      "path": "/api/v1/chats/private",
+      "summary": "创建私聊",
+      "tag": "消息私信与群聊",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "chat",
+      "file": "src/api/chat.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/code-cases/{caseId}",
+      "summary": "获取代码案例详情",
+      "tag": "学习资源库",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "resource",
+      "file": "src/api/resource.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/documents/{documentId}",
+      "summary": "获取文档详情",
+      "tag": "文档阅读",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "resource",
+      "file": "src/api/resource.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/documents/{documentId}/ask",
+      "summary": "Sage 伴读提问",
+      "tag": "文档阅读",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "resource",
+      "file": "src/api/resource.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/documents/{documentId}/outline",
+      "summary": "获取文档目录",
+      "tag": "文档阅读",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "resource",
+      "file": "src/api/resource.js"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/documents/{documentId}/reading-progress",
+      "summary": "更新阅读进度",
+      "tag": "文档阅读",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "resource",
+      "file": "src/api/resource.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/exercise-sets",
+      "summary": "获取练习/测试列表",
+      "tag": "练习与测试",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "exercise",
+      "file": "src/api/exercise.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/exercise-sets/{exerciseSetId}",
+      "summary": "获取练习/测试详情",
+      "tag": "练习与测试",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "exercise",
+      "file": "src/api/exercise.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/exercise-sets/{exerciseSetId}/questions/{questionId}",
+      "summary": "获取单题答题详情",
+      "tag": "练习与测试",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "exercise",
+      "file": "src/api/exercise.js"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/exercise-sets/{exerciseSetId}/questions/{questionId}/answer",
+      "summary": "保存单题答案",
+      "tag": "练习与测试",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "exercise",
+      "file": "src/api/exercise.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/exercise-sets/{exerciseSetId}/questions/{questionId}/code-run",
+      "summary": "提交代码题即时评测",
+      "tag": "练习与测试",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "exercise",
+      "file": "src/api/exercise.js"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/exercise-sets/{exerciseSetId}/questions/{questionId}/flag",
+      "summary": "标记或取消标记题目",
+      "tag": "练习与测试",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "exercise",
+      "file": "src/api/exercise.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/exercise-sets/{exerciseSetId}/questions/{questionId}/hint",
+      "summary": "请求 Coach 提示",
+      "tag": "练习与测试",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "exercise",
+      "file": "src/api/exercise.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/exercise-sets/{exerciseSetId}/submit",
+      "summary": "提交练习/测试",
+      "tag": "练习与测试",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "exercise",
+      "file": "src/api/exercise.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/exercise-sets/attempts/{attemptId}/report",
+      "summary": "获取练习/测试报告",
+      "tag": "练习与测试",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "exercise",
+      "file": "src/api/exercise.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/explore",
+      "summary": "调用 Nebula 全局探索",
+      "tag": "Nebula探索与资源生成",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "system",
+      "file": "src/api/system.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/explore/{exploreId}",
+      "summary": "获取探索详情",
+      "tag": "Nebula探索与资源生成",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "system",
+      "file": "src/api/system.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/explore/{exploreId}/mindmap",
+      "summary": "生成思维导图",
+      "tag": "Nebula探索与资源生成",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "system",
+      "file": "src/api/system.js"
+    },
+    {
+      "method": "POST",
       "path": "/api/v1/friend-requests",
       "summary": "发起好友申请",
       "tag": "消息私信与群聊",
+      "source": "main",
       "status": "✅ 已实现",
       "module": "chat",
       "file": "src/api/chat.js"
@@ -748,276 +510,87 @@
       "path": "/api/v1/friend-requests/{requestId}",
       "summary": "处理好友申请",
       "tag": "消息私信与群聊",
+      "source": "main",
       "status": "✅ 已实现",
       "module": "chat",
       "file": "src/api/chat.js"
     },
     {
       "method": "GET",
-      "path": "/api/v1/notifications",
-      "summary": "获取通知列表",
-      "tag": "通知",
+      "path": "/api/v1/knowledge-graph",
+      "summary": "获取知识关联图谱",
+      "tag": "Nebula探索与资源生成",
+      "source": "main",
       "status": "✅ 已实现",
       "module": "system",
       "file": "src/api/system.js"
     },
     {
       "method": "PUT",
-      "path": "/api/v1/notifications/{notificationId}/read",
-      "summary": "标记通知已读",
-      "tag": "通知",
+      "path": "/api/v1/learning-plans/{planId}/adjust",
+      "summary": "调整学习计划",
+      "tag": "学习计划日历与拓扑",
+      "source": "main",
       "status": "✅ 已实现",
-      "module": "system",
-      "file": "src/api/system.js"
+      "module": "learning",
+      "file": "src/api/learning.js"
     },
     {
-      "method": "PUT",
-      "path": "/api/v1/notifications/read-all",
-      "summary": "全部通知已读",
-      "tag": "通知",
+      "method": "GET",
+      "path": "/api/v1/learning-plans/{planId}/topology",
+      "summary": "获取学习拓扑",
+      "tag": "学习计划日历与拓扑",
+      "source": "main",
       "status": "✅ 已实现",
-      "module": "system",
-      "file": "src/api/system.js"
+      "module": "learning",
+      "file": "src/api/learning.js"
     },
     {
-      "method": "DELETE",
-      "path": "/api/v1/notifications/{notificationId}",
-      "summary": "删除通知",
-      "tag": "通知",
+      "method": "GET",
+      "path": "/api/v1/learning-plans/{planId}/topology/nodes/{nodeId}/resource-network",
+      "summary": "获取知识点资源网络图",
+      "tag": "学习计划日历与拓扑",
+      "source": "main",
       "status": "✅ 已实现",
-      "module": "system",
-      "file": "src/api/system.js"
+      "module": "learning",
+      "file": "src/api/learning.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/learning-plans/{planId}/topology/nodes/{nodeId}/resources",
+      "summary": "获取知识点资源网络图列表视图",
+      "tag": "学习计划日历与拓扑",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "learning",
+      "file": "src/api/learning.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/learning-plans/current",
+      "summary": "获取学习计划",
+      "tag": "学习计划日历与拓扑",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "learning",
+      "file": "src/api/learning.js"
     },
     {
       "method": "POST",
-      "path": "/api/v1/notifications/{notificationId}/actions",
-      "summary": "通知动作回调",
-      "tag": "通知",
+      "path": "/api/v1/learning-plans/generate",
+      "summary": "Strict 生成学习计划",
+      "tag": "学习计划日历与拓扑",
+      "source": "main",
       "status": "✅ 已实现",
-      "module": "system",
-      "file": "src/api/system.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/settings",
-      "summary": "获取设置",
-      "tag": "设置",
-      "status": "✅ 已实现",
-      "module": "settings",
-      "file": "src/api/settings.js"
-    },
-    {
-      "method": "PUT",
-      "path": "/api/v1/settings",
-      "summary": "更新设置",
-      "tag": "设置",
-      "status": "✅ 已实现",
-      "module": "settings",
-      "file": "src/api/settings.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/settings/cache/clear",
-      "summary": "清理缓存",
-      "tag": "设置",
-      "status": "✅ 已实现",
-      "module": "settings",
-      "file": "src/api/settings.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/user/devices",
-      "summary": "获取登录设备",
-      "tag": "设备与安全",
-      "status": "✅ 已实现",
-      "module": "user",
-      "file": "src/api/user.js"
-    },
-    {
-      "method": "DELETE",
-      "path": "/api/v1/user/devices/{deviceId}",
-      "summary": "下线指定设备",
-      "tag": "设备与安全",
-      "status": "✅ 已实现",
-      "module": "user",
-      "file": "src/api/user.js"
-    },
-    {
-      "method": "PUT",
-      "path": "/api/v1/user/password",
-      "summary": "修改密码",
-      "tag": "设备与安全",
-      "status": "✅ 已实现",
-      "module": "user",
-      "file": "src/api/user.js"
-    },
-    {
-      "method": "PUT",
-      "path": "/api/v1/user/email",
-      "summary": "绑定或更换邮箱",
-      "tag": "设备与安全",
-      "status": "✅ 已实现",
-      "module": "user",
-      "file": "src/api/user.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/uploads/token",
-      "summary": "获取上传凭证",
-      "tag": "文件上传",
-      "status": "✅ 已实现",
-      "module": "upload",
-      "file": "src/api/upload.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/uploads/complete",
-      "summary": "提交上传完成",
-      "tag": "文件上传",
-      "status": "✅ 已实现",
-      "module": "upload",
-      "file": "src/api/upload.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/manage/auth/login",
-      "summary": "管理端登录",
-      "tag": "Manage管理端",
-      "status": "✅ 已实现",
-      "module": "manage",
-      "file": "src/api/manage.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/manage/dashboard/overview",
-      "summary": "数据看板",
-      "tag": "Manage管理端",
-      "status": "✅ 已实现",
-      "module": "manage",
-      "file": "src/api/manage.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/manage/users",
-      "summary": "用户管理列表",
-      "tag": "Manage管理端",
-      "status": "✅ 已实现",
-      "module": "manage",
-      "file": "src/api/manage.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/manage/users/{userId}/actions",
-      "summary": "用户封禁、解封与警告",
-      "tag": "Manage管理端",
-      "status": "✅ 已实现",
-      "module": "manage",
-      "file": "src/api/manage.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/manage/users/{userId}/learning-trace",
-      "summary": "查看用户学习轨迹",
-      "tag": "Manage管理端",
-      "status": "✅ 已实现",
-      "module": "manage",
-      "file": "src/api/manage.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/manage/knowledge-base/documents",
-      "summary": "知识库文档列表",
-      "tag": "Manage管理端",
-      "status": "✅ 已实现",
-      "module": "manage",
-      "file": "src/api/manage.js"
-    },
-    {
-      "method": "POST",
-      "path": "/api/v1/manage/knowledge-base/documents",
-      "summary": "上传知识库文档",
-      "tag": "Manage管理端",
-      "status": "✅ 已实现",
-      "module": "manage",
-      "file": "src/api/manage.js"
-    },
-    {
-      "method": "PUT",
-      "path": "/api/v1/manage/knowledge-base/documents/{documentId}",
-      "summary": "更新知识库文档",
-      "tag": "Manage管理端",
-      "status": "✅ 已实现",
-      "module": "manage",
-      "file": "src/api/manage.js"
-    },
-    {
-      "method": "DELETE",
-      "path": "/api/v1/manage/knowledge-base/documents/{documentId}",
-      "summary": "删除知识库文档",
-      "tag": "Manage管理端",
-      "status": "✅ 已实现",
-      "module": "manage",
-      "file": "src/api/manage.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/manage/knowledge-base/documents/{documentId}/parse-status",
-      "summary": "文档解析入库状态",
-      "tag": "Manage管理端",
-      "status": "✅ 已实现",
-      "module": "manage",
-      "file": "src/api/manage.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/manage/ai-disputes",
-      "summary": "争议内容工单列表",
-      "tag": "Manage管理端",
-      "status": "✅ 已实现",
-      "module": "manage",
-      "file": "src/api/manage.js"
-    },
-    {
-      "method": "PUT",
-      "path": "/api/v1/manage/ai-disputes/{disputeId}",
-      "summary": "处理争议内容",
-      "tag": "Manage管理端",
-      "status": "✅ 已实现",
-      "module": "manage",
-      "file": "src/api/manage.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/manage/storage/overview",
-      "summary": "资源存储监控",
-      "tag": "Manage管理端",
-      "status": "✅ 已实现",
-      "module": "manage",
-      "file": "src/api/manage.js"
-    },
-    {
-      "method": "GET",
-      "path": "/api/v1/manage/resources",
-      "summary": "管理历史生成资源",
-      "tag": "Manage管理端",
-      "status": "✅ 已实现",
-      "module": "manage",
-      "file": "src/api/manage.js"
-    },
-    {
-      "method": "DELETE",
-      "path": "/api/v1/manage/resources/{resourceId}",
-      "summary": "删除历史生成资源",
-      "tag": "Manage管理端",
-      "status": "✅ 已实现",
-      "module": "manage",
-      "file": "src/api/manage.js"
+      "module": "learning",
+      "file": "src/api/learning.js"
     },
     {
       "method": "GET",
       "path": "/api/v1/manage/agent-prompts",
       "summary": "Prompt 配置列表",
       "tag": "Manage管理端",
+      "source": "main",
       "status": "✅ 已实现",
       "module": "manage",
       "file": "src/api/manage.js"
@@ -1027,33 +600,367 @@
       "path": "/api/v1/manage/agent-prompts/{promptId}",
       "summary": "更新 Prompt 配置",
       "tag": "Manage管理端",
+      "source": "main",
       "status": "✅ 已实现",
       "module": "manage",
       "file": "src/api/manage.js"
     },
     {
       "method": "GET",
-      "path": "/api/v1/manage/moderation/content",
-      "summary": "内容 AI 审核列表",
+      "path": "/api/v1/manage/ai-disputes",
+      "summary": "争议内容工单列表",
       "tag": "Manage管理端",
+      "source": "main",
       "status": "✅ 已实现",
       "module": "manage",
       "file": "src/api/manage.js"
     },
     {
       "method": "PUT",
-      "path": "/api/v1/manage/moderation/content/{recordId}",
-      "summary": "处理内容审核结果",
+      "path": "/api/v1/manage/ai-disputes/{disputeId}",
+      "summary": "处理争议内容",
       "tag": "Manage管理端",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "manage",
+      "file": "src/api/manage.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/manage/auth/login",
+      "summary": "管理端登录",
+      "tag": "Manage管理端",
+      "source": "main",
       "status": "✅ 已实现",
       "module": "manage",
       "file": "src/api/manage.js"
     },
     {
       "method": "GET",
+      "path": "/api/v1/manage/dashboard/overview",
+      "summary": "数据看板",
+      "tag": "Manage管理端",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "manage",
+      "file": "src/api/manage.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/knowledge-base/agent-runs",
+      "summary": "分页查询 Agent 运行记录",
+      "tag": "Agent Ops",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/knowledge-base/agent-runs/{runId}",
+      "summary": "获取单个 Agent Run",
+      "tag": "Agent Ops",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/knowledge-base/agent-runs/{runId}/checkpoints",
+      "summary": "分页查询 Agent Run Checkpoint",
+      "tag": "Agent Ops",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/knowledge-base/agent-runs/{runId}/events",
+      "summary": "分页查询 Agent Run 事件",
+      "tag": "Agent Ops",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/manage/knowledge-base/agent-runs/{runId}/replay",
+      "summary": "重放 Agent Run",
+      "tag": "Agent Ops",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/manage/knowledge-base/agent-runs/{runId}/resume",
+      "summary": "从最近或指定 Checkpoint 恢复 Agent Run",
+      "tag": "Agent Ops",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/knowledge-base/candidates",
+      "summary": "分页查询候选治理记录",
+      "tag": "KB Governance",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/knowledge-base/candidates/{candidateId}",
+      "summary": "获取候选治理详情",
+      "tag": "KB Governance",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/manage/knowledge-base/candidates/{candidateId}/approve",
+      "summary": "人工批准候选内容",
+      "tag": "KB Governance",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/manage/knowledge-base/candidates/{candidateId}/reject",
+      "summary": "驳回候选内容",
+      "tag": "KB Governance",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/manage/knowledge-base/candidates/{candidateId}/replay",
+      "summary": "重放候选治理链路",
+      "tag": "KB Governance",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/manage/knowledge-base/candidates/{candidateId}/rollback",
+      "summary": "回滚已晋升候选内容",
+      "tag": "KB Governance",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/knowledge-base/dashboard/candidates",
+      "summary": "候选治理指标分页",
+      "tag": "KB Governance",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/knowledge-base/dashboard/failures",
+      "summary": "查询失败事件分页",
+      "tag": "KB Governance",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/knowledge-base/dashboard/overview",
+      "summary": "知识库总览指标",
+      "tag": "KB Governance",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/knowledge-base/dashboard/quality",
+      "summary": "知识库质量指标",
+      "tag": "KB Governance",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/knowledge-base/dashboard/stages",
+      "summary": "知识库阶段指标",
+      "tag": "KB Governance",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/knowledge-base/documents",
+      "summary": "分页查询知识库文档",
+      "tag": "KB Documents",
+      "source": "main+kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/manage/knowledge-base/documents",
+      "summary": "创建知识库文档",
+      "tag": "KB Documents",
+      "source": "main+kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/manage/knowledge-base/documents/{documentId}",
+      "summary": "删除知识库文档",
+      "tag": "KB Documents",
+      "source": "main+kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/manage/knowledge-base/documents/{documentId}",
+      "summary": "更新知识库文档",
+      "tag": "KB Documents",
+      "source": "main+kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/knowledge-base/documents/{documentId}/chunks",
+      "summary": "获取文档切块分页列表",
+      "tag": "KB Documents",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/knowledge-base/documents/{documentId}/parse-status",
+      "summary": "获取文档解析状态",
+      "tag": "KB Documents",
+      "source": "main+kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/manage/knowledge-base/documents/{documentId}/reparse",
+      "summary": "触发文档重新解析",
+      "tag": "KB Documents",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/knowledge-base/evaluations/runs",
+      "summary": "分页查询评估运行",
+      "tag": "KB Governance",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/manage/knowledge-base/evaluations/runs",
+      "summary": "创建离线评估运行",
+      "tag": "KB Governance",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/knowledge-base/evaluations/runs/{runId}",
+      "summary": "获取单个评估运行",
+      "tag": "KB Governance",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/knowledge-base/ingest-jobs",
+      "summary": "分页查询入库任务",
+      "tag": "KB Governance",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/manage/knowledge-base/ingest-jobs",
+      "summary": "创建 KB 异步入库任务",
+      "tag": "KB Governance",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/knowledge-base/ingest-jobs/{taskId}",
+      "summary": "获取单个入库任务",
+      "tag": "KB Governance",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/manage/knowledge-base/ingest-jobs/{taskId}/retry",
+      "summary": "重试入库任务",
+      "tag": "KB Governance",
+      "source": "kb-agent",
+      "status": "✅ 已实现",
+      "module": "kb",
+      "file": "src/api/kb.js"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/manage/moderation/behavior-alerts",
       "summary": "用户行为风控预警",
       "tag": "Manage管理端",
+      "source": "main",
       "status": "✅ 已实现",
       "module": "manage",
       "file": "src/api/manage.js"
@@ -1063,9 +970,480 @@
       "path": "/api/v1/manage/moderation/behavior-alerts/{alertId}",
       "summary": "处理行为预警",
       "tag": "Manage管理端",
+      "source": "main",
       "status": "✅ 已实现",
       "module": "manage",
       "file": "src/api/manage.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/moderation/content",
+      "summary": "内容 AI 审核列表",
+      "tag": "Manage管理端",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "manage",
+      "file": "src/api/manage.js"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/manage/moderation/content/{recordId}",
+      "summary": "处理内容审核结果",
+      "tag": "Manage管理端",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "manage",
+      "file": "src/api/manage.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/resources",
+      "summary": "管理历史生成资源",
+      "tag": "Manage管理端",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "manage",
+      "file": "src/api/manage.js"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/manage/resources/{resourceId}",
+      "summary": "删除历史生成资源",
+      "tag": "Manage管理端",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "manage",
+      "file": "src/api/manage.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/storage/overview",
+      "summary": "资源存储监控",
+      "tag": "Manage管理端",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "manage",
+      "file": "src/api/manage.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/users",
+      "summary": "用户管理列表",
+      "tag": "Manage管理端",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "manage",
+      "file": "src/api/manage.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/manage/users/{userId}/actions",
+      "summary": "用户封禁、解封与警告",
+      "tag": "Manage管理端",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "manage",
+      "file": "src/api/manage.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/manage/users/{userId}/learning-trace",
+      "summary": "查看用户学习轨迹",
+      "tag": "Manage管理端",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "manage",
+      "file": "src/api/manage.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/notifications",
+      "summary": "获取通知列表",
+      "tag": "通知",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "system",
+      "file": "src/api/system.js"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/notifications/{notificationId}",
+      "summary": "删除通知",
+      "tag": "通知",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "system",
+      "file": "src/api/system.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/notifications/{notificationId}/actions",
+      "summary": "通知动作回调",
+      "tag": "通知",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "system",
+      "file": "src/api/system.js"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/notifications/{notificationId}/read",
+      "summary": "标记通知已读",
+      "tag": "通知",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "system",
+      "file": "src/api/system.js"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/notifications/read-all",
+      "summary": "全部通知已读",
+      "tag": "通知",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "system",
+      "file": "src/api/system.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/onboarding/answers",
+      "summary": "提交单轮画像回答",
+      "tag": "Spark画像与首次引导",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "onboarding",
+      "file": "src/api/onboarding.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/onboarding/complete",
+      "summary": "生成 Spark 画像",
+      "tag": "Spark画像与首次引导",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "onboarding",
+      "file": "src/api/onboarding.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/onboarding/questions",
+      "summary": "获取画像引导问题",
+      "tag": "Spark画像与首次引导",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "onboarding",
+      "file": "src/api/onboarding.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/readings/{readingId}",
+      "summary": "获取拓展阅读详情",
+      "tag": "学习资源库",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "resource",
+      "file": "src/api/resource.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/resources",
+      "summary": "获取资源列表",
+      "tag": "学习资源库",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "resource",
+      "file": "src/api/resource.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/resources/{resourceId}",
+      "summary": "获取资源详情",
+      "tag": "学习资源库",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "resource",
+      "file": "src/api/resource.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/resources/{resourceId}/export",
+      "summary": "导出资源",
+      "tag": "学习资源库",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "resource",
+      "file": "src/api/resource.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/resources/{resourceId}/feedback",
+      "summary": "对资源进行质量反馈",
+      "tag": "学习资源库",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "resource",
+      "file": "src/api/resource.js"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/resources/{resourceId}/progress",
+      "summary": "更新资源学习进度",
+      "tag": "学习资源库",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "resource",
+      "file": "src/api/resource.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/settings",
+      "summary": "获取设置",
+      "tag": "设置",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "settings",
+      "file": "src/api/settings.js"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/settings",
+      "summary": "更新设置",
+      "tag": "设置",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "settings",
+      "file": "src/api/settings.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/settings/cache/clear",
+      "summary": "清理缓存",
+      "tag": "设置",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "settings",
+      "file": "src/api/settings.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/skill-tree",
+      "summary": "获取技能树",
+      "tag": "技能树",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "learning",
+      "file": "src/api/learning.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/skill-tree/nodes/{nodeId}/light-up",
+      "summary": "点亮技能节点",
+      "tag": "技能树",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "learning",
+      "file": "src/api/learning.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/spark-profile/rebuild",
+      "summary": "重新构建画像",
+      "tag": "Spark画像与首次引导",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "onboarding",
+      "file": "src/api/onboarding.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/uploads/complete",
+      "summary": "完成上传并登记文件",
+      "tag": "Upload",
+      "source": "main+kb-agent",
+      "status": "✅ 已实现",
+      "module": "upload",
+      "file": "src/api/upload.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/uploads/token",
+      "summary": "创建上传凭证",
+      "tag": "Upload",
+      "source": "main+kb-agent",
+      "status": "✅ 已实现",
+      "module": "upload",
+      "file": "src/api/upload.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/user/collections",
+      "summary": "获取我的收藏",
+      "tag": "用户资料与个人中心",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "user",
+      "file": "src/api/user.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/user/collections",
+      "summary": "收藏或取消收藏",
+      "tag": "用户资料与个人中心",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "user",
+      "file": "src/api/user.js"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/user/collections/{collectionId}",
+      "summary": "删除收藏",
+      "tag": "用户资料与个人中心",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "user",
+      "file": "src/api/user.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/user/current",
+      "summary": "获取当前用户",
+      "tag": "用户资料与个人中心",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "user",
+      "file": "src/api/user.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/user/devices",
+      "summary": "获取登录设备",
+      "tag": "设备与安全",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "user",
+      "file": "src/api/user.js"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/user/devices/{deviceId}",
+      "summary": "下线指定设备",
+      "tag": "设备与安全",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "user",
+      "file": "src/api/user.js"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/user/email",
+      "summary": "绑定或更换邮箱",
+      "tag": "设备与安全",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "user",
+      "file": "src/api/user.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/user/learning-stats",
+      "summary": "获取学习数据统计",
+      "tag": "用户资料与个人中心",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "user",
+      "file": "src/api/user.js"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/user/password",
+      "summary": "修改密码",
+      "tag": "设备与安全",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "user",
+      "file": "src/api/user.js"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/user/profile",
+      "summary": "更新个人资料",
+      "tag": "用户资料与个人中心",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "user",
+      "file": "src/api/user.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/users/{userId}",
+      "summary": "获取指定用户主页",
+      "tag": "用户资料与个人中心",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "user",
+      "file": "src/api/user.js"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/users/{userId}/follow",
+      "summary": "取消关注用户",
+      "tag": "社区与文章",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "user",
+      "file": "src/api/user.js"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/users/{userId}/follow",
+      "summary": "关注用户",
+      "tag": "社区与文章",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "user",
+      "file": "src/api/user.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/videos/{videoId}",
+      "summary": "获取视频详情",
+      "tag": "视频学习",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "resource",
+      "file": "src/api/resource.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/videos/{videoId}/episodes",
+      "summary": "获取视频选集",
+      "tag": "视频学习",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "resource",
+      "file": "src/api/resource.js"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/videos/{videoId}/transcripts",
+      "summary": "获取视频字幕与 AI 提示",
+      "tag": "视频学习",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "resource",
+      "file": "src/api/resource.js"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/videos/{videoId}/watch-progress",
+      "summary": "上报播放进度",
+      "tag": "视频学习",
+      "source": "main",
+      "status": "✅ 已实现",
+      "module": "resource",
+      "file": "src/api/resource.js"
     }
   ]
 }

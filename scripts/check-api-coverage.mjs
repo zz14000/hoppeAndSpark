@@ -4,20 +4,47 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, '..');
-const spec = JSON.parse(fs.readFileSync(path.join(root, 'Hope and Sparks API.openapi.json'), 'utf8'));
 
-const openapiEndpoints = [];
-for (const [p, methods] of Object.entries(spec.paths)) {
-  for (const [method, def] of Object.entries(methods)) {
-    if (!['get', 'post', 'put', 'delete', 'patch'].includes(method)) continue;
-    openapiEndpoints.push({
-      method: method.toUpperCase(),
-      path: p,
-      summary: def.summary || '',
-      tag: (def.tags && def.tags[0]) || '',
-    });
+const OPENAPI_FILES = [
+  { file: 'Hope and Sparks API.openapi.json', source: 'main' },
+  { file: 'apifox-kb-agent-openapi.json', source: 'kb-agent' },
+];
+
+function extractEndpoints(spec, source) {
+  const list = [];
+  for (const [p, methods] of Object.entries(spec.paths || {})) {
+    for (const [method, def] of Object.entries(methods)) {
+      if (!['get', 'post', 'put', 'delete', 'patch'].includes(method)) continue;
+      list.push({
+        method: method.toUpperCase(),
+        path: p,
+        summary: def.summary || '',
+        tag: (def.tags && def.tags[0]) || '',
+        source,
+      });
+    }
+  }
+  return list;
+}
+
+const endpointMap = new Map();
+for (const { file, source } of OPENAPI_FILES) {
+  const filePath = path.join(root, file);
+  if (!fs.existsSync(filePath)) {
+    console.warn(`跳过不存在的 OpenAPI 文件: ${file}`);
+    continue;
+  }
+  const spec = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  for (const ep of extractEndpoints(spec, source)) {
+    const key = `${ep.method} ${ep.path}`;
+    const existing = endpointMap.get(key);
+    endpointMap.set(key, existing ? { ...existing, ...ep, source: `${existing.source}+${source}` } : ep);
   }
 }
+
+const openapiEndpoints = Array.from(endpointMap.values()).sort(
+  (a, b) => a.path.localeCompare(b.path) || a.method.localeCompare(b.method)
+);
 
 function normalizePath(p) {
   return p
@@ -45,6 +72,16 @@ function scanApiDir(dir) {
   const requestContent = fs.readFileSync(path.join(dir, 'request.js'), 'utf8');
   if (requestContent.includes("'/api/v1/auth/refresh'")) {
     implementations.push({ method: 'POST', path: '/api/v1/auth/refresh', module: 'request', file: 'src/api/request.js' });
+  }
+  // agent.js SSE stream（使用 fetch，非 http.get）
+  const agentContent = fs.readFileSync(path.join(dir, 'agent.js'), 'utf8');
+  if (agentContent.includes('agent-sessions/${sessionId}/stream')) {
+    implementations.push({
+      method: 'GET',
+      path: '/api/v1/agent-sessions/{sessionId}/stream',
+      module: 'agent',
+      file: 'src/api/agent.js',
+    });
   }
   return implementations;
 }
@@ -93,7 +130,10 @@ function generateMarkdown(data) {
 
   lines.push('# Hope & Sparks 前端 API 接口实现汇总');
   lines.push('');
-  lines.push(`> 依据 \`Hope and Sparks API.openapi.json\` 自动生成，最后更新：${date}`);
+  lines.push(`> 依据主规范 + KB/Agent 补充规范自动生成，最后更新：${date}`);
+  lines.push('>');
+  lines.push('> - `Hope and Sparks API.openapi.json`');
+  lines.push('> - `apifox-kb-agent-openapi.json`');
   lines.push('');
   lines.push('## 覆盖率概览');
   lines.push('');
@@ -135,7 +175,8 @@ function generateMarkdown(data) {
     chat: '私信、群聊、好友申请',
     settings: '用户设置与缓存',
     upload: '文件上传',
-    manage: '管理端后台',
+    manage: '管理端后台（用户、审核、资源等）',
+    kb: '知识库文档、入库治理、评估与 Agent Ops',
     request: 'HTTP 请求层（Token 自动刷新）',
   };
 
@@ -198,7 +239,8 @@ function generateMarkdown(data) {
   lines.push('');
   lines.push('相关文件：');
   lines.push('');
-  lines.push('- OpenAPI 规范：`Hope and Sparks API.openapi.json`');
+  lines.push('- 主 OpenAPI：`Hope and Sparks API.openapi.json`');
+  lines.push('- KB/Agent OpenAPI：`apifox-kb-agent-openapi.json`');
   lines.push('- JSON 机器可读：`docs/API_COVERAGE.json`');
   lines.push('');
 
