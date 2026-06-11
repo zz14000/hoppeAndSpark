@@ -39,7 +39,7 @@ public class NebulaAgent implements SpecialistAgent {
         MemoryContext memory = context.get("memory") instanceof MemoryContext value ? value : new MemoryContext("", Map.of(), "", Map.of(), List.of());
         RetrievalBundle retrieval = context.get("retrieval") instanceof RetrievalBundle value
                 ? value
-                : new RetrievalBundle(List.of(), List.of(), List.of(), List.of(), List.of(), false, List.of());
+                : new RetrievalBundle(List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), null, List.of(), List.of(), false, List.of(), Map.of());
         String description = llmGateway.generate(new LlmRequest(
                 promptTemplateService.render("nebula", Map.of(
                         "output_contract", """
@@ -61,16 +61,20 @@ public class NebulaAgent implements SpecialistAgent {
                 ),
                 Map.of("agent", "nebula", "mode", request.agentMode(), "taskType", task.taskType().name())
         )).content();
-        String script = """
-                flowchart TD
-                    A[读取问题] --> B[识别知识点]
-                    B --> C[拆解关键步骤]
-                    C --> D[生成答案]
-                    D --> E[复查与输出]
-                """;
+        @SuppressWarnings("unchecked")
+        List<String> nodeSummary = description.lines()
+                .map(String::trim)
+                .filter(line -> !line.isBlank())
+                .limit(5)
+                .toList();
+        Map<String, Object> generated = (Map<String, Object>) toolRegistry.call("diagram_generate", Map.of(
+                "diagramType", "flowchart",
+                "nodeSummary", nodeSummary
+        ));
+        String script = String.valueOf(generated.getOrDefault("diagramScript", ""));
         String imagePath = "";
         if (request.renderMermaid()) {
-            MermaidRenderResult renderResult = (MermaidRenderResult) toolRegistry.call("mermaid_render", Map.of(
+            MermaidRenderResult renderResult = (MermaidRenderResult) toolRegistry.call("diagram_render", Map.of(
                     "diagramScript", script,
                     "outputName", "agent-diagram-" + request.messageId(),
                     "format", "png"
@@ -79,17 +83,25 @@ public class NebulaAgent implements SpecialistAgent {
         }
         return new AgentTaskResult(task.taskId(), name(), "COMPLETED",
                 description,
+                "nebula.v1",
                 Map.of(
                         "diagramType", "flowchart",
-                        "nodeSummary", List.of("读取问题", "识别知识点", "拆解关键步骤", "生成答案", "复查与输出")
+                        "diagramIntent", request.userQuery(),
+                        "diagramScript", script,
+                        "nodeSummary", nodeSummary,
+                        "renderHint", String.valueOf(generated.getOrDefault("renderHint", "")),
+                        "textExplanation", description
                 ),
+                description,
                 List.of(),
                 false,
                 Map.of(
                         "diagramScript", script,
                         "diagramImagePath", imagePath
                 ),
-                request.renderMermaid() ? List.of("llm_generate", "mermaid_render") : List.of("llm_generate"),
-                imagePath.isBlank() && request.renderMermaid() ? List.of("diagram_render_missing") : List.of());
+                request.renderMermaid() ? List.of("llm_generate", "diagram_generate", "diagram_render") : List.of("llm_generate", "diagram_generate"),
+                imagePath.isBlank() && request.renderMermaid() ? List.of("diagram_render_missing") : List.of(),
+                imagePath.isBlank() && request.renderMermaid() ? 0.65D : 0.9D,
+                description);
     }
 }

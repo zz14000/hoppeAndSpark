@@ -35,7 +35,7 @@ public class SageAgent implements SpecialistAgent {
     public AgentTaskResult execute(AgentRunRequest request, AgentTask task, Map<String, Object> context) {
         RetrievalBundle retrieval = context.get("retrieval") instanceof RetrievalBundle bundle
                 ? bundle
-                : new RetrievalBundle(List.of(), List.of(), List.of(), List.of(), List.of(), false, List.of());
+                : new RetrievalBundle(List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), null, List.of(), List.of(), false, List.of(), Map.of());
         MemoryContext memory = context.get("memory") instanceof MemoryContext memoryContext
                 ? memoryContext
                 : new MemoryContext("", Map.of(), "", Map.of(), List.of());
@@ -71,15 +71,20 @@ public class SageAgent implements SpecialistAgent {
         )).content();
         List<String> citations = retrieval.citations();
         return new AgentTaskResult(task.taskId(), name(), "COMPLETED", content,
+                "sage.v1",
                 Map.of(
                         "summary", content,
                         "citations", citations,
-                        "memorySummary", memory.sessionSummary()
+                        "memorySummary", memory.sessionSummary(),
+                        "knowledgePoints", request.knowledgePointIds() == null ? List.of() : request.knowledgePointIds()
                 ),
+                content,
                 citations,
                 false,
                 Map.of(),
                 List.of("llm_generate"),
-                citations.isEmpty() && task.requiresRag() ? List.of("missing_citations") : List.of());
+                citations.isEmpty() && task.requiresRag() ? List.of("missing_citations") : List.of(),
+                citations.isEmpty() ? 0.72D : 0.91D,
+                content);
     }
 }

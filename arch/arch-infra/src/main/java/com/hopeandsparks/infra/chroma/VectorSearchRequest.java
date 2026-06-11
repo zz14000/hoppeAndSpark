@@ -7,6 +7,7 @@ public record VectorSearchRequest(
         String userId,
         String projectId,
         String collection,
+        List<String> collections,
         String query,
         List<Float> vector,
         int topK,

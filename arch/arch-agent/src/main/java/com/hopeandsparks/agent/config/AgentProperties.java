@@ -11,6 +11,8 @@ public class AgentProperties {
     private final Graph graph = new Graph();
     private final Memory memory = new Memory();
     private final WebSearch webSearch = new WebSearch();
+    private final Checkpoint checkpoint = new Checkpoint();
+    private final Retrieval retrieval = new Retrieval();
 
     public String getRuntime() {
         return runtime;
@@ -30,6 +32,14 @@ public class AgentProperties {
 
     public WebSearch getWebSearch() {
         return webSearch;
+    }
+
+    public Checkpoint getCheckpoint() {
+        return checkpoint;
+    }
+
+    public Retrieval getRetrieval() {
+        return retrieval;
     }
 
     public static class Graph {
@@ -90,6 +100,30 @@ public class AgentProperties {
 
         public void setDefaultAllowed(boolean defaultAllowed) {
             this.defaultAllowed = defaultAllowed;
+        }
+    }
+
+    public static class Checkpoint {
+        private boolean enabled = true;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+    }
+
+    public static class Retrieval {
+        private int defaultTopK = 5;
+
+        public int getDefaultTopK() {
+            return defaultTopK;
+        }
+
+        public void setDefaultTopK(int defaultTopK) {
+            this.defaultTopK = defaultTopK;
         }
     }
 }

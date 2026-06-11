@@ -1,5 +1,14 @@
 package com.hopeandsparks.manage.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hopeandsparks.agent.dto.AgentCheckpointSnapshot;
+import com.hopeandsparks.agent.dto.AgentRunRequest;
+import com.hopeandsparks.agent.repository.AgentRunRecord;
+import com.hopeandsparks.agent.repository.AgentRunRepository;
+import com.hopeandsparks.agent.service.AgentCheckpointStore;
+import com.hopeandsparks.agent.service.AgentOrchestrationService;
+import com.hopeandsparks.agent.service.AgentRunEventStore;
+import com.hopeandsparks.agent.vo.AgentRunResultVO;
 import com.hopeandsparks.common.response.PageResponse;
 import com.hopeandsparks.infra.config.KbProperties;
 import com.hopeandsparks.infra.file.FileStorageService;
@@ -11,9 +20,11 @@ import com.hopeandsparks.kb.repository.KbDocumentRepository;
 import com.hopeandsparks.kb.service.KbCandidateGovernanceService;
 import com.hopeandsparks.kb.service.KbDocumentService;
 import com.hopeandsparks.kb.vo.KbDocumentWriteVO;
+import com.hopeandsparks.manage.dto.AgentRunResumeRequest;
 import com.hopeandsparks.manage.dto.CreateKbIngestJobRequest;
 import com.hopeandsparks.manage.dto.KbCandidateReviewRequest;
 import com.hopeandsparks.manage.service.ManageKnowledgeGovernanceService;
+import com.hopeandsparks.manage.vo.AgentRunVO;
 import com.hopeandsparks.manage.vo.KbCandidateVO;
 import com.hopeandsparks.manage.vo.KbDashboardOverviewVO;
 import com.hopeandsparks.manage.vo.KbEvaluationRunVO;
@@ -23,20 +34,16 @@ import com.hopeandsparks.manage.vo.KbStageMetricVO;
 import com.hopeandsparks.task.dto.CreateAsyncTaskCommand;
 import com.hopeandsparks.task.dto.RecordAsyncTaskEventCommand;
 import com.hopeandsparks.task.service.AsyncTaskService;
-import com.hopeandsparks.task.vo.AsyncTaskEventVO;
 import com.hopeandsparks.task.vo.AsyncTaskVO;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class ManageKnowledgeGovernanceServiceImpl implements ManageKnowledgeGovernanceService {
@@ -51,6 +58,11 @@ public class ManageKnowledgeGovernanceServiceImpl implements ManageKnowledgeGove
     private final FileStorageService fileStorageService;
     private final KbProperties kbProperties;
     private final JdbcTemplate jdbcTemplate;
+    private final AgentRunRepository agentRunRepository;
+    private final AgentRunEventStore agentRunEventStore;
+    private final AgentCheckpointStore agentCheckpointStore;
+    private final AgentOrchestrationService agentOrchestrationService;
+    private final ObjectMapper objectMapper;
 
     public ManageKnowledgeGovernanceServiceImpl(
             KbDocumentService kbDocumentService,
@@ -60,7 +72,12 @@ public class ManageKnowledgeGovernanceServiceImpl implements ManageKnowledgeGove
             RedisStreamClient redisStreamClient,
             FileStorageService fileStorageService,
             KbProperties kbProperties,
-            JdbcTemplate jdbcTemplate
+            JdbcTemplate jdbcTemplate,
+            AgentRunRepository agentRunRepository,
+            AgentRunEventStore agentRunEventStore,
+            AgentCheckpointStore agentCheckpointStore,
+            AgentOrchestrationService agentOrchestrationService,
+            ObjectMapper objectMapper
     ) {
         this.kbDocumentService = kbDocumentService;
         this.kbDocumentRepository = kbDocumentRepository;
@@ -70,6 +87,11 @@ public class ManageKnowledgeGovernanceServiceImpl implements ManageKnowledgeGove
         this.fileStorageService = fileStorageService;
         this.kbProperties = kbProperties;
         this.jdbcTemplate = jdbcTemplate;
+        this.agentRunRepository = agentRunRepository;
+        this.agentRunEventStore = agentRunEventStore;
+        this.agentCheckpointStore = agentCheckpointStore;
+        this.agentOrchestrationService = agentOrchestrationService;
+        this.objectMapper = objectMapper;
         ensureEvaluationSchema();
     }
 
@@ -348,6 +370,84 @@ public class ManageKnowledgeGovernanceServiceImpl implements ManageKnowledgeGove
         ), runId);
     }
 
+    @Override
+    public PageResponse<AgentRunVO> listAgentRuns(Map<String, String> query) {
+        int page = parseInt(query == null ? null : query.get("page"), 1);
+        int size = Math.min(parseInt(query == null ? null : query.get("size"), 20), 100);
+        List<AgentRunRecord> records = agentRunRepository.listRecent(Math.max(page * size, size));
+        int from = Math.min((page - 1) * size, records.size());
+        int to = Math.min(from + size, records.size());
+        return PageResponse.of(page, size, records.size(), records.subList(from, to).stream().map(this::toAgentRunVo).toList());
+    }
+
+    @Override
+    public AgentRunVO getAgentRun(String runId) {
+        return agentRunRepository.findByRunId(runId)
+                .map(this::toAgentRunVo)
+                .orElseThrow(() -> new IllegalArgumentException("agent run not found: " + runId));
+    }
+
+    @Override
+    public PageResponse<Map<String, Object>> listAgentRunEvents(String runId, Map<String, String> query) {
+        int page = parseInt(query == null ? null : query.get("page"), 1);
+        int size = Math.min(parseInt(query == null ? null : query.get("size"), 50), 200);
+        List<Map<String, Object>> list = agentRunEventStore.listRecords(runId).stream()
+                .map(record -> {
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("eventId", record.eventId());
+                    item.put("runId", record.runId());
+                    item.put("nodeName", record.nodeName());
+                    item.put("stage", record.stage());
+                    item.put("status", record.status());
+                    item.put("summary", record.summary());
+                    item.put("payloadJson", record.payloadJson());
+                    item.put("durationMs", record.durationMs());
+                    item.put("retryCount", record.retryCount());
+                    item.put("createdAt", record.createdAt());
+                    return item;
+                })
+                .toList();
+        return slice(page, size, list);
+    }
+
+    @Override
+    public PageResponse<Map<String, Object>> listAgentRunCheckpoints(String runId, Map<String, String> query) {
+        int page = parseInt(query == null ? null : query.get("page"), 1);
+        int size = Math.min(parseInt(query == null ? null : query.get("size"), 50), 200);
+        List<Map<String, Object>> list = agentCheckpointStore.listCheckpoints(runId).stream()
+                .map(snapshot -> {
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("checkpointId", snapshot.checkpointId());
+                    item.put("runId", snapshot.runId());
+                    item.put("nodeName", snapshot.nodeName());
+                    item.put("stateVersion", snapshot.stateVersion());
+                    item.put("checkpointStateJson", snapshot.checkpointStateJson());
+                    item.put("payload", snapshot.payload());
+                    return item;
+                })
+                .toList();
+        return slice(page, size, list);
+    }
+
+    @Override
+    public AgentRunVO resumeAgentRun(AuthenticatedPrincipal principal, String runId, AgentRunResumeRequest request) {
+        AgentRunResultVO result = agentOrchestrationService.resume(runId, request == null ? "" : safe(request.checkpointId(), ""));
+        return getAgentRun(result.runId());
+    }
+
+    @Override
+    public AgentRunVO replayAgentRun(AuthenticatedPrincipal principal, String runId) {
+        AgentRunRecord record = agentRunRepository.findByRunId(runId)
+                .orElseThrow(() -> new IllegalArgumentException("agent run not found: " + runId));
+        try {
+            AgentRunRequest request = objectMapper.readValue(record.requestJson(), AgentRunRequest.class);
+            AgentRunResultVO result = agentOrchestrationService.run(request);
+            return getAgentRun(result.runId());
+        } catch (Exception exception) {
+            throw new IllegalStateException("failed to replay agent run: " + runId, exception);
+        }
+    }
+
     private KbIngestJobVO toJobVo(AsyncTaskVO task) {
         return new KbIngestJobVO(
                 task.taskId(),
@@ -380,6 +480,34 @@ public class ManageKnowledgeGovernanceServiceImpl implements ManageKnowledgeGove
                 record.promotionReason(),
                 record.approvedDocumentId()
         );
+    }
+
+    private AgentRunVO toAgentRunVo(AgentRunRecord record) {
+        return new AgentRunVO(
+                record.runId(),
+                record.sessionId(),
+                record.userId(),
+                record.projectId(),
+                record.runtime(),
+                record.status(),
+                record.currentNode(),
+                record.currentRevision(),
+                record.maxRevision(),
+                record.errorCode(),
+                record.errorMessage(),
+                record.startedAt(),
+                record.finishedAt(),
+                Map.of(
+                        "requestJson", record.requestJson(),
+                        "hasError", record.errorCode() != null && !record.errorCode().isBlank()
+                )
+        );
+    }
+
+    private <T> PageResponse<T> slice(int page, int size, List<T> list) {
+        int from = Math.min((page - 1) * size, list.size());
+        int to = Math.min(from + size, list.size());
+        return PageResponse.of(page, size, list.size(), list.subList(from, to));
     }
 
     private long countTasksByStatus(String status) {

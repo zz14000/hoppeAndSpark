@@ -10,5 +10,7 @@ public interface AgentOrchestrationService {
 
     AgentRunResultVO run(AgentRunRequest request);
 
+    AgentRunResultVO resume(String runId, String checkpointId);
+
     List<AgentStreamEventVO> streamEvents(String runId);
 }

@@ -5,6 +5,8 @@ import com.hopeandsparks.agent.dto.AgentExecutionPlan;
 import com.hopeandsparks.agent.dto.AgentTask;
 import com.hopeandsparks.agent.dto.AgentTaskResult;
 import com.hopeandsparks.agent.dto.MemoryContext;
+import com.hopeandsparks.agent.dto.ResourceBundle;
+import com.hopeandsparks.agent.dto.ResourceSelectionDecision;
 import com.hopeandsparks.agent.dto.RetrievalBundle;
 import com.hopeandsparks.agent.dto.ReviewDecision;
 import com.hopeandsparks.agent.enums.AgentIntent;
@@ -26,10 +28,14 @@ public record AgentGraphState(
         ReviewDecision review,
         MemoryContext memory,
         RetrievalBundle retrieval,
+        ResourceBundle resourceBundle,
+        ResourceSelectionDecision resourceDecision,
         String draft,
         Map<String, Object> revision,
         Map<String, Object> toolContext,
         Map<String, Object> artifacts,
+        Map<String, Object> resourceContext,
+        Map<String, Object> resourceTelemetry,
         Map<String, Object> telemetry,
         int maxRevisionCount,
         int currentRevisionCount,

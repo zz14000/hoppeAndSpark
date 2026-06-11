@@ -3,10 +3,12 @@ package com.hopeandsparks.manage.controller;
 import com.hopeandsparks.common.response.ApiResponse;
 import com.hopeandsparks.common.response.PageResponse;
 import com.hopeandsparks.infra.security.AuthenticatedPrincipal;
+import com.hopeandsparks.manage.dto.AgentRunResumeRequest;
 import com.hopeandsparks.manage.dto.CreateKbIngestJobRequest;
 import com.hopeandsparks.manage.dto.KbCandidateReviewRequest;
 import com.hopeandsparks.manage.service.ManageKnowledgeGovernanceService;
 import com.hopeandsparks.manage.service.ManageOperationLogService;
+import com.hopeandsparks.manage.vo.AgentRunVO;
 import com.hopeandsparks.manage.vo.KbCandidateVO;
 import com.hopeandsparks.manage.vo.KbDashboardOverviewVO;
 import com.hopeandsparks.manage.vo.KbEvaluationRunVO;
@@ -175,6 +177,57 @@ public class ManageKnowledgeGovernanceController {
     @GetMapping("/evaluations/runs/{runId}")
     public ApiResponse<KbEvaluationRunVO> evaluationRun(@PathVariable String runId) {
         return ApiResponse.ok(governanceService.getEvaluationRun(runId));
+    }
+
+    @GetMapping("/agent-runs")
+    public ApiResponse<PageResponse<AgentRunVO>> agentRuns(@RequestParam Map<String, String> query) {
+        return ApiResponse.ok(governanceService.listAgentRuns(query));
+    }
+
+    @GetMapping("/agent-runs/{runId}")
+    public ApiResponse<AgentRunVO> agentRun(@PathVariable String runId) {
+        return ApiResponse.ok(governanceService.getAgentRun(runId));
+    }
+
+    @GetMapping("/agent-runs/{runId}/events")
+    public ApiResponse<PageResponse<Map<String, Object>>> agentRunEvents(
+            @PathVariable String runId,
+            @RequestParam Map<String, String> query
+    ) {
+        return ApiResponse.ok(governanceService.listAgentRunEvents(runId, query));
+    }
+
+    @GetMapping("/agent-runs/{runId}/checkpoints")
+    public ApiResponse<PageResponse<Map<String, Object>>> agentRunCheckpoints(
+            @PathVariable String runId,
+            @RequestParam Map<String, String> query
+    ) {
+        return ApiResponse.ok(governanceService.listAgentRunCheckpoints(runId, query));
+    }
+
+    @PostMapping("/agent-runs/{runId}/resume")
+    public ApiResponse<AgentRunVO> resumeAgentRun(
+            Authentication authentication,
+            HttpServletRequest servletRequest,
+            @PathVariable String runId,
+            @RequestBody(required = false) AgentRunResumeRequest request
+    ) {
+        AuthenticatedPrincipal principal = principal(authentication);
+        AgentRunVO result = governanceService.resumeAgentRun(principal, runId, request);
+        operationLogService.record(principal, "agent", "resume_run", "agent_run", null, "resume agent run: " + runId, servletRequest);
+        return ApiResponse.ok(result);
+    }
+
+    @PostMapping("/agent-runs/{runId}/replay")
+    public ApiResponse<AgentRunVO> replayAgentRun(
+            Authentication authentication,
+            HttpServletRequest servletRequest,
+            @PathVariable String runId
+    ) {
+        AuthenticatedPrincipal principal = principal(authentication);
+        AgentRunVO result = governanceService.replayAgentRun(principal, runId);
+        operationLogService.record(principal, "agent", "replay_run", "agent_run", null, "replay agent run: " + runId, servletRequest);
+        return ApiResponse.ok(result);
     }
 
     private AuthenticatedPrincipal principal(Authentication authentication) {

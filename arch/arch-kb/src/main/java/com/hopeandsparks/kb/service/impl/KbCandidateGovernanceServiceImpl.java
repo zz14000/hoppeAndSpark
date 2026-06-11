@@ -352,6 +352,7 @@ public class KbCandidateGovernanceServiceImpl implements KbCandidateGovernanceSe
                 safe(userId),
                 safe(projectId),
                 FORMAL_COLLECTION,
+                List.of(FORMAL_COLLECTION),
                 "",
                 vector,
                 1,

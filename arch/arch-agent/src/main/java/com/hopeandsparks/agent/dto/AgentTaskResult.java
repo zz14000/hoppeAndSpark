@@ -10,11 +10,15 @@ public record AgentTaskResult(
         AgentName sourceAgent,
         String status,
         String answerText,
+        String schemaVersion,
         Map<String, Object> structuredPayload,
+        String renderedText,
         List<String> citations,
         boolean needAsyncGeneration,
         Map<String, Object> artifacts,
         List<String> toolCalls,
-        List<String> issues
+        List<String> issues,
+        double confidence,
+        String rawModelOutput
 ) {
 }

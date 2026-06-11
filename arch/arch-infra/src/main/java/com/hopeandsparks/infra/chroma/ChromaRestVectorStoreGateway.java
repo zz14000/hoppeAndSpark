@@ -64,30 +64,41 @@ public class ChromaRestVectorStoreGateway implements ChromaVectorStoreGateway {
     @Override
     @SuppressWarnings("unchecked")
     public VectorSearchResponse search(VectorSearchRequest request) {
-        ChromaScope scope = scope(request.userId(), request.projectId(), request.collection());
-        Map<String, Object> collection = findCollection(scope);
-        if (collection.isEmpty()) {
-            return new VectorSearchResponse(scope, List.of(), false);
+        List<String> targetCollections = request.collections() == null || request.collections().isEmpty()
+                ? List.of(blankToDefault(request.collection(), "edu_ground_truth"))
+                : request.collections();
+        List<RetrievedChunk> allChunks = new ArrayList<>();
+        ChromaScope effectiveScope = null;
+        for (String collectionName : targetCollections) {
+            ChromaScope scope = scope(request.userId(), request.projectId(), collectionName);
+            effectiveScope = scope;
+            Map<String, Object> collection = findCollection(scope);
+            if (collection.isEmpty()) {
+                continue;
+            }
+            String collectionId = String.valueOf(collection.get("id"));
+            Map<String, Object> body = request.vector() != null && !request.vector().isEmpty()
+                    ? Map.of(
+                    "query_embeddings", List.of(request.vector()),
+                    "n_results", request.topK() <= 0 ? 5 : request.topK(),
+                    "where", sanitizeFilters(request.filters()),
+                    "include", List.of("documents", "metadatas", "distances")
+            )
+                    : Map.of(
+                    "query_texts", List.of(blankToDefault(request.query(), "")),
+                    "n_results", request.topK() <= 0 ? 5 : request.topK(),
+                    "where", sanitizeFilters(request.filters()),
+                    "include", List.of("documents", "metadatas", "distances")
+            );
+            Map<String, Object> response = webClient.post()
+                    .uri(queryUri(scope, collectionId))
+                    .bodyValue(body)
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+            allChunks.addAll(chunks(response));
         }
-        String collectionId = String.valueOf(collection.get("id"));
-        Map<String, Object> body = request.vector() != null && !request.vector().isEmpty()
-                ? Map.of(
-                "query_embeddings", List.of(request.vector()),
-                "n_results", request.topK() <= 0 ? 5 : request.topK(),
-                "include", List.of("documents", "metadatas", "distances")
-        )
-                : Map.of(
-                "query_texts", List.of(blankToDefault(request.query(), "")),
-                "n_results", request.topK() <= 0 ? 5 : request.topK(),
-                "include", List.of("documents", "metadatas", "distances")
-        );
-        Map<String, Object> response = webClient.post()
-                .uri(queryUri(scope, collectionId))
-                .bodyValue(body)
-                .retrieve()
-                .bodyToMono(Map.class)
-                .block();
-        return new VectorSearchResponse(scope, chunks(response), false);
+        return new VectorSearchResponse(effectiveScope == null ? scope(request.userId(), request.projectId(), request.collection()) : effectiveScope, allChunks, false);
     }
 
     @Override
@@ -241,6 +252,26 @@ public class ChromaRestVectorStoreGateway implements ChromaVectorStoreGateway {
     private boolean isConflict(RuntimeException exception) {
         String message = Objects.toString(exception.getMessage(), "").toLowerCase();
         return message.contains("409") || message.contains("already exists") || message.contains("conflict");
+    }
+
+    private Map<String, Object> sanitizeFilters(Map<String, Object> filters) {
+        if (filters == null || filters.isEmpty()) {
+            return Map.of();
+        }
+        Map<String, Object> sanitized = new java.util.LinkedHashMap<>();
+        copyIfPresent(filters, sanitized, "documentId");
+        copyIfPresent(filters, sanitized, "sourceDomain");
+        copyIfPresent(filters, sanitized, "projectId");
+        copyIfPresent(filters, sanitized, "userId");
+        copyIfPresent(filters, sanitized, "promotionStatus");
+        return sanitized;
+    }
+
+    private void copyIfPresent(Map<String, Object> source, Map<String, Object> target, String key) {
+        Object value = source.get(key);
+        if (value != null && !String.valueOf(value).isBlank()) {
+            target.put(key, value);
+        }
     }
 
     private String trimTrailingSlash(String value) {

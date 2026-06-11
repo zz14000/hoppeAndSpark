@@ -3,6 +3,9 @@ package com.hopeandsparks.agent.service.impl;
 import com.hopeandsparks.agent.dto.AgentMessageSendRequest;
 import com.hopeandsparks.agent.dto.AgentRunRequest;
 import com.hopeandsparks.agent.dto.AgentSessionCreateRequest;
+import com.hopeandsparks.agent.enums.AgentCheckpointPolicy;
+import com.hopeandsparks.agent.enums.AgentOutputFormat;
+import com.hopeandsparks.agent.enums.AgentRetrievalMode;
 import com.hopeandsparks.agent.service.AgentOrchestrationService;
 import com.hopeandsparks.agent.service.AgentSessionService;
 import com.hopeandsparks.agent.vo.AgentMessageSendVO;
@@ -67,6 +70,16 @@ public class AgentSessionServiceImpl implements AgentSessionService {
                 Boolean.TRUE.equals(request.allowWebSearch()),
                 safe(request.strictnessLevel(), "standard"),
                 Boolean.TRUE.equals(request.renderMermaid()),
+                Map.of(),
+                safe(request.agentMode(), "qa"),
+                AgentOutputFormat.STRICT_JSON_WITH_TEXT,
+                Boolean.TRUE.equals(request.allowWebSearch()) ? AgentRetrievalMode.KB_FIRST_CONTROLLED_WEB : AgentRetrievalMode.KB_ONLY,
+                AgentCheckpointPolicy.AUTO,
+                "",
+                "",
+                true,
+                "standard",
+                5,
                 Map.of()
         ));
         String answerId = "assistant-" + messageId;

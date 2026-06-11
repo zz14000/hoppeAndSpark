@@ -1,6 +1,7 @@
 package com.hopeandsparks.agent.dto;
 
 import com.hopeandsparks.agent.enums.AgentName;
+import com.hopeandsparks.agent.enums.AgentNodeStatus;
 import com.hopeandsparks.agent.enums.RevisionTarget;
 import com.hopeandsparks.agent.enums.ReviewStatus;
 
@@ -16,6 +17,10 @@ public record ReviewDecision(
         RevisionTarget revisionTarget,
         boolean repairable,
         List<String> qualityFlags,
+        List<ReviewIssueVO> reviewIssues,
+        List<String> resourceIssues,
+        RevisionTarget resourceRevisionTarget,
+        AgentNodeStatus nodeStatus,
         Map<String, Object> metadata
 ) {
 }

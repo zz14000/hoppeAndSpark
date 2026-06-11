@@ -5,4 +5,6 @@ import com.hopeandsparks.agent.orchestration.AgentGraphState;
 public interface GraphRuntime {
 
     AgentGraphState run(AgentGraphState initialState);
+
+    AgentGraphState resume(AgentGraphState resumedState);
 }

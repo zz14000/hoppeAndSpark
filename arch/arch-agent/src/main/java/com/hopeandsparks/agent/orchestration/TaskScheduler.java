@@ -7,6 +7,7 @@ import com.hopeandsparks.agent.dto.AgentTaskResult;
 import com.hopeandsparks.agent.dto.MemoryContext;
 import com.hopeandsparks.agent.dto.RetrievalBundle;
 import com.hopeandsparks.agent.enums.AgentName;
+import com.hopeandsparks.agent.service.AgentOutputValidator;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumMap;
@@ -18,11 +19,13 @@ import java.util.Map;
 public class TaskScheduler {
 
     private final Map<AgentName, SpecialistAgent> agents = new EnumMap<>(AgentName.class);
+    private final AgentOutputValidator outputValidator;
 
-    public TaskScheduler(List<SpecialistAgent> specialists) {
+    public TaskScheduler(List<SpecialistAgent> specialists, AgentOutputValidator outputValidator) {
         for (SpecialistAgent specialist : specialists) {
             agents.put(specialist.name(), specialist);
         }
+        this.outputValidator = outputValidator;
     }
 
     public List<AgentTaskResult> execute(
@@ -56,6 +59,7 @@ public class TaskScheduler {
                     "historyByAgent", historyByAgent
             );
             AgentTaskResult result = agents.get(task.targetAgent()).execute(request, task, context);
+            outputValidator.validate(result);
             completedByTaskId.put(task.taskId(), result);
             historyByAgent.put(task.targetAgent(), result);
             results.add(result);

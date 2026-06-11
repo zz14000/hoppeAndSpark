@@ -35,7 +35,7 @@ public class CoachAgent implements SpecialistAgent {
         MemoryContext memory = context.get("memory") instanceof MemoryContext value ? value : new MemoryContext("", Map.of(), "", Map.of(), List.of());
         RetrievalBundle retrieval = context.get("retrieval") instanceof RetrievalBundle value
                 ? value
-                : new RetrievalBundle(List.of(), List.of(), List.of(), List.of(), List.of(), false, List.of());
+                : new RetrievalBundle(List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), null, List.of(), List.of(), false, List.of(), Map.of());
         String content = llmGateway.generate(new LlmRequest(
                 promptTemplateService.render("coach", Map.of(
                         "output_contract", """
@@ -65,16 +65,20 @@ public class CoachAgent implements SpecialistAgent {
         );
         return new AgentTaskResult(task.taskId(), name(), "COMPLETED",
                 content,
+                "coach.v1",
                 Map.of(
                         "steps", steps,
                         "hints", List.of("先看题目条件", "再看边界条件"),
                         "commonMistakes", List.of("忽略边界", "没有验证结果")
                 ),
+                content,
                 List.of(),
                 false,
                 Map.of("stepList", steps),
                 List.of("llm_generate"),
-                List.of());
+                List.of(),
+                0.88D,
+                content);
     }
 
     private String safe(String value, String defaultValue) {

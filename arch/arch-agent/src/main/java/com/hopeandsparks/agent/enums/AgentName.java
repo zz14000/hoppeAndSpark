@@ -7,5 +7,6 @@ public enum AgentName {
     COACH,
     STRICT,
     NEBULA,
+    RESOURCE,
     HORIZON
 }

@@ -4,6 +4,8 @@ import com.hopeandsparks.common.response.PageResponse;
 import com.hopeandsparks.infra.security.AuthenticatedPrincipal;
 import com.hopeandsparks.manage.dto.CreateKbIngestJobRequest;
 import com.hopeandsparks.manage.dto.KbCandidateReviewRequest;
+import com.hopeandsparks.manage.dto.AgentRunResumeRequest;
+import com.hopeandsparks.manage.vo.AgentRunVO;
 import com.hopeandsparks.manage.vo.KbCandidateVO;
 import com.hopeandsparks.manage.vo.KbDashboardOverviewVO;
 import com.hopeandsparks.manage.vo.KbEvaluationRunVO;
@@ -51,4 +53,16 @@ public interface ManageKnowledgeGovernanceService {
     PageResponse<KbEvaluationRunVO> listEvaluationRuns(Map<String, String> query);
 
     KbEvaluationRunVO getEvaluationRun(String runId);
+
+    PageResponse<AgentRunVO> listAgentRuns(Map<String, String> query);
+
+    AgentRunVO getAgentRun(String runId);
+
+    PageResponse<Map<String, Object>> listAgentRunEvents(String runId, Map<String, String> query);
+
+    PageResponse<Map<String, Object>> listAgentRunCheckpoints(String runId, Map<String, String> query);
+
+    AgentRunVO resumeAgentRun(AuthenticatedPrincipal principal, String runId, AgentRunResumeRequest request);
+
+    AgentRunVO replayAgentRun(AuthenticatedPrincipal principal, String runId);
 }

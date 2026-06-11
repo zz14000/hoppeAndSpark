@@ -55,15 +55,20 @@ public class StrictAgent implements SpecialistAgent {
         List<String> steps = List.of("第1天: 梳理知识框架", "第2天: 完成例题", "第3天: 复盘错题并调整计划");
         return new AgentTaskResult(task.taskId(), name(), "COMPLETED",
                 content,
+                "strict.v1",
                 Map.of(
                         "planItems", steps,
                         "checkpoints", List.of("完成框架梳理", "完成例题", "完成错题复盘"),
-                        "adaptationRules", List.of("若两天内未完成例题则降低计划密度")
+                        "adaptationRules", List.of("若两天内未完成例题则降低计划密度"),
+                        "planSummary", content
                 ),
+                content,
                 List.of(),
                 false,
                 Map.of("learningPlan", steps, "courseName", request.courseName()),
                 List.of("llm_generate"),
-                List.of());
+                List.of(),
+                0.86D,
+                content);
     }
 }

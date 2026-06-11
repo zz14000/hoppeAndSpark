@@ -10,8 +10,12 @@ public record AgentExecutionPlan(
         List<AgentTask> taskList,
         List<String> dependencies,
         boolean requiresDiagram,
+        boolean requiresResources,
         boolean requiresRag,
         boolean requiresReview,
-        OutputMode outputMode
+        OutputMode outputMode,
+        List<String> resourceGoals,
+        List<String> preferredResourceTypes,
+        String resourceOutputMode
 ) {
 }
